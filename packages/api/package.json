@@ -1,7 +1,7 @@
 {
   "name": "@knittinglog/api",
   "version": "0.1.0",
-  "description": "API for PROJECT",
+  "description": "Sample TypeScript SDK generated from the KnittingLog backend API.",
   "main": "src/index.ts",
   "exports": {
     ".": "./src/index.ts"
@@ -19,7 +19,7 @@
     "type": "git",
     "url": "https://github.com/KnittingLog/back"
   },
-  "author": "AUTHOR",
+
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/KnittingLog/back/issues"
