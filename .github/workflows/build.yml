@@ -9,7 +9,17 @@ jobs:
   Ubuntu:
     runs-on: ubuntu-latest
     env:
-      POSTGRES_URL: postgresql://postgres:root@localhost:5432/postgres
+      MODE: local
+      API_PORT: 3000
+      SYSTEM_PASSWORD: ci-test-only-placeholder
+      POSTGRES_URL: postgresql://postgres:root@localhost:5432/postgres?schema=public
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      POSTGRES_DATABASE: postgres
+      POSTGRES_SCHEMA: public
+      POSTGRES_USERNAME: postgres
+      POSTGRES_USERNAME_READONLY: postgres
+      POSTGRES_PASSWORD: root
     services:
       postgres:
         image: postgis/postgis:16-3.4
