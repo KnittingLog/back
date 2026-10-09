@@ -1,0 +1,31 @@
+{
+  "private": true,
+  "name": "@knittinglog/back",
+  "version": "0.1.0",
+  "description": "Backend for PROJECT",
+  "scripts": {
+    "build": "pnpm -r --if-present build",
+    "dev": "pnpm -C packages/backend dev",
+    "format": "pnpm -r --if-present format",
+    "lint": "pnpm -r --if-present lint",
+    "start": "pnpm -C packages/backend start",
+    "test": "pnpm -C packages/backend test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/samchon/backend"
+  },
+  "author": "AUTHOR",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/samchon/backend/issues"
+  },
+  "homepage": "https://github.com/samchon/backend",
+  "packageManager": "pnpm@10.10.0",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "prisma",
+      "@prisma/engines"
+    ]
+  }
+}

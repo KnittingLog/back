@@ -1,0 +1,12 @@
+{
+  "extends": "../../config/tsconfig.json",
+  "compilerOptions": {
+    "declaration": true,
+    "stripInternal": true,
+    "outDir": "lib",
+    "rootDir": "src",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  },
+  "include": ["src"]
+}

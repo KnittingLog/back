@@ -1,0 +1,25 @@
+packages:
+  - "config"
+  - "packages/*"
+catalogs:
+  samchon:
+    nestia: &nestia ^12.1.0
+    "@nestia/benchmark": *nestia
+    "@nestia/core": *nestia
+    "@nestia/e2e": *nestia
+    "@nestia/fetcher": *nestia
+    "@nestia/sdk": *nestia
+    tgrid: ^1.2.1
+    tstl: ^3.0.0
+    typia: ^14.0.1
+  rolldown:
+    rolldown: ^1.2.3
+  utils:
+    rimraf: ^6.1.3
+    uuid: ^13.0.0
+  typescript:
+    ttsc: &ttsc ^0.21.0
+    "@ttsc/lint": *ttsc
+    "@ttsc/paths": *ttsc
+    "@ttsc/unplugin": *ttsc
+    typescript: ^7.0.2

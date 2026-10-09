@@ -1,0 +1,61 @@
+{
+  "name": "@knittinglog/api",
+  "version": "0.1.0",
+  "description": "API for PROJECT",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "pnpm build:sdk && pnpm build:ttsc && pnpm build:rolldown",
+    "build:sdk": "cd ../backend && pnpm build:sdk",
+    "build:ttsc": "rimraf lib && ttsc -p tsconfig.json",
+    "build:rolldown": "rolldown -c",
+    "format": "ttsc format -p tsconfig.json",
+    "lint": "ttsc -p tsconfig.json --noEmit",
+    "prepack": "pnpm build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/KnittingLog/back"
+  },
+  "author": "AUTHOR",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/KnittingLog/back/issues"
+  },
+  "homepage": "https://github.com/KnittingLog/back#readme",
+  "files": [
+    "lib",
+    "package.json",
+    "swagger.json",
+    "README.md"
+  ],
+  "dependencies": {
+    "@nestia/fetcher": "catalog:samchon",
+    "tgrid": "catalog:samchon",
+    "typia": "catalog:samchon"
+  },
+  "devDependencies": {
+    "@knittinglog/api": "workspace:^",
+    "@ttsc/lint": "catalog:typescript",
+    "@ttsc/unplugin": "catalog:typescript",
+    "rimraf": "catalog:utils",
+    "rolldown": "catalog:rolldown",
+    "tinyglobby": "^0.2.12",
+    "ttsc": "catalog:typescript",
+    "typescript": "catalog:typescript"
+  },
+  "publishConfig": {
+    "main": "./lib/index.js",
+    "module": "./lib/index.mjs",
+    "types": "./lib/index.d.ts",
+    "exports": {
+      ".": {
+        "types": "./lib/index.d.ts",
+        "import": "./lib/index.mjs",
+        "default": "./lib/index.js"
+      }
+    }
+  }
+}

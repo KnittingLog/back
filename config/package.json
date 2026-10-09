@@ -1,0 +1,14 @@
+{
+  "private": true,
+  "name": "@knittinglog/config",
+  "version": "0.1.0",
+  "description": "Shared TypeScript and @ttsc/lint configuration for the workspace",
+  "files": [
+    "lint.config.ts",
+    "tsconfig.json"
+  ],
+  "devDependencies": {
+    "@ttsc/lint": "catalog:typescript",
+    "typescript": "catalog:typescript"
+  }
+}

@@ -1,0 +1,68 @@
+bin/
+dist/
+lib/
+node_modules/
+packages/backend/prisma/migrations
+packages/backend/prisma/schema/migrations
+packages/backend/src/prisma
+
+*.DS_Store
+package-lock.json
+swagger.json
+openai.json
+.npmrc
+*.log
+
+# Local secrets
+/.env
+
+# Local-only secrets and environment overrides
+/.env
+/.env.*
+!/.env.example
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.*.example
+**/compose.override.yaml
+**/compose.override.yml
+**/compose.local.yaml
+**/compose.local.yml
+**/docker-compose.override.yaml
+**/docker-compose.override.yml
+**/docker-compose.local.yaml
+**/docker-compose.local.yml
+**/*.local.override.yaml
+**/*.local.override.yml
+
+# Local database bind mounts and generated database files
+/.local-db/
+/local-db/
+/docker-data/
+/data/postgres/
+**/postgres-data/
+**/postgres-data/**
+**/*.sqlite
+**/*.sqlite3
+
+# Temporary verification, consumer, and package artifacts
+/.tmp/
+/tmp/
+/.cache/
+**/.cache/
+/.turbo/
+/coverage/
+**/coverage/
+/sdk-consumer/
+/sdk-consumer-*/
+**/sdk-consumer-*/
+*.tgz
+*.tar.gz
+*.tsbuildinfo
+
+# Local credentials only. Keep committed example files available.
+/.local-credentials/
+/credentials.local.*
+**/credentials.local.*
+
+# Keep the upstream Prisma migration ignore policy until the owner decides otherwise.
