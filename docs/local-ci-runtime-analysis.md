@@ -140,6 +140,31 @@ Prisma 안전 장치가 DB 초기화를 차단했다. `--reset true`와 스키�
 
 로컬 로그는 `/private/tmp/knittinglog-native-cache-qa-MELzPw`에 있다. `act` 로그와 요약은 `/private/tmp/knittinglog-cache-qa-NPqDRQ`에 있다.
 
+## 원격 GitHub Actions 검증 (2026-10-10)
+
+사용자의 push 승인 후 `KnittingLog/back`에 `feat/ci-build-cache`를 올렸다. [Draft PR #5](https://github.com/KnittingLog/back/pull/5)의 대상은 `develop`이다.
+
+원격 저장소에는 `develop`이 없었다. 기존 `main`의 `69acb96`을 기준으로 만들었다. `main`에는 push하지 않았다.
+
+검증한 커밋은 `2433b3a`이다. 원격의 기존 Node 24와 DB 초기화 없는 모니터 테스트 설정을 유지했다. 로컬 검증과 원격 검증의 의존성 트리는 다르다.
+
+[실행 37951118652](https://github.com/KnittingLog/back/actions/runs/37951118652)의 첫 시도와 같은 커밋의 재실행이 모두 통과했다. 아래 시간은 GitHub 단계 시작과 종료 시각의 차이다.
+
+| 원격 실행 | 설치 | 빌드 | 테스트 | 전체 작업 | 플러그인 재컴파일 로그 |
+|---|---:|---:|---:|---:|---:|
+| 첫 시도 | 8초 | 209초 | 5초 | 247초 | 2개 |
+| 두 번째 시도 | 4초 | 17초 | 7초 | 59초 | 0개 |
+
+첫 시도는 pnpm 캐시와 컴파일러 캐시를 저장했다. 두 번째 시도는 두 캐시를 정확한 키로 복원했다.
+
+컴파일러 캐시 키는 `Linux-X64-ttsc-v1-57ca5ddb320a143c5044739aae646e05272540d782af201a067c354f88d57fcf`였다. 압축 크기는 약 421 MB였다.
+
+빌드와 테스트는 두 번 모두 실행했다. 테스트 범위는 health check와 system 모니터 2개이다. DB 초기화와 DB 연동 검증은 포함하지 않는다.
+
+원격 검증은 이전 절의 `NOT_VERIFIED` 상태 이후에 수행했다. DB 초기화 승인은 여전히 받지 않았다. 머지와 배포는 수행하지 않았다.
+
+원격 로그는 `/private/tmp/knittinglog-github-cache-run-1.log`와 `/private/tmp/knittinglog-github-cache-run-2.log`에 있다.
+
 ## Limits
 
 The local run does not represent a GitHub-hosted runner.
