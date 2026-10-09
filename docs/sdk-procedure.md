@@ -1,5 +1,13 @@
 # 샘플 API SDK 절차
 
+## 현재 상태
+
+- packages/api는 Nestia가 생성한 샘플 SDK입니다. 실제 계정·프로젝트 기능 SDK가 아닙니다.
+- 로컬 생성, 빌드, tarball 검사와 격리 소비자 검증 절차를 기록합니다.
+- 패키지 이름 @knittinglog/api와 배포 범위는 제안입니다. npm 발행은 하지 않았습니다.
+- 과거 장애 기록은 이전 상태입니다. 현재 검증은 docs/verification.md를 봅니다.
+
+
 ## 범위
 
 원본 `packages/api`를 유지합니다. 이번 패키지는 샘플 API SDK입니다. 회원·프로젝트 SDK는 실제 기능 API가 만들어진 뒤에 진행합니다. `@knittinglog/api`는 제안 이름입니다. 실제 npm scope와 공개 범위는 미정입니다. 이 절차는 SDK를 빌드하고 pack 결과를 검증하는 내용이며 npm 발행을 포함하지 않습니다.

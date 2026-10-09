@@ -1,5 +1,16 @@
 # 검증 기록
 
+## 현재 상태
+
+- 원격 기준 브랜치는 main입니다. 변경은 knittinglog-public 작업 브랜치에 반영합니다.
+- GitHub Actions의 이전 실행은 MyGlobal 환경 검증에 필요한 값이 빠져 실패했습니다. 전체 CI 전용 기본값을 추가했습니다. 새 실행 결과를 아래에 기록합니다.
+- install의 prepare/build:prisma가 만드는 ERD는 원본 샘플 모델의 산출물입니다.
+- SDK는 로컬 tarball로 검증합니다. npm 발행, front 수정, 배포는 하지 않습니다.
+- Expo SDK 57 소비자 검증은 타입 검사와 Metro 번들 범위입니다. 실제 디바이스 실행은 검증하지 않습니다.
+- 추적 파일에 비밀값을 저장하지 않습니다. 테스트는 전용 폐기 가능 DB에서만 수행합니다.
+
+## 실행 기록
+
 ## 작업 위치
 
 `work/KnittingLog-back` (현재 VS Code에서 열어야 함)

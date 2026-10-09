@@ -1,5 +1,12 @@
 # 기반 코드 기준
 
+## 현재 기준
+
+- 원본은 samchon/backend 커밋 52f7070a4ad43a60cfd59262ae89543331bce308에서 시작했습니다.
+- KnittingLog 백엔드 작업 브랜치에 저장소 변경을 반영했습니다. main은 유지합니다.
+- 아래의 연결 및 확보 실패는 이전 시도 기록입니다. 현재 상태는 docs/verification.md를 봅니다.
+
+
 ## 기준 출처
 
 - 원본: `https://github.com/samchon/backend`
