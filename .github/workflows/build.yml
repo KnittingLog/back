@@ -31,13 +31,25 @@ jobs:
     #     options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - uses: pnpm/action-setup@v4
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install
         run: pnpm install --frozen-lockfile
+
+      - name: Cache ttsc
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules/.cache/ttsc/plugins
+            node_modules/.cache/ttsc/go-build
+          key: ${{ runner.os }}-${{ runner.arch }}-ttsc-v1-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-ttsc-v1-
 
       - name: Build
         run: pnpm build
