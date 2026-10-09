@@ -8,6 +8,8 @@ on:
 jobs:
   Ubuntu:
     runs-on: ubuntu-latest
+    env:
+      POSTGRES_URL: postgresql://postgres:root@localhost:5432/postgres
     services:
       postgres:
         image: postgis/postgis:16-3.4
