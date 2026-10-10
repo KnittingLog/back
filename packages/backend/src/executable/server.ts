@@ -16,10 +16,14 @@ async function main(): Promise<void> {
       process.exit(0);
     })();
   });
-  global.process.on("uncaughtException", console.error);
-  global.process.on("unhandledRejection", console.error);
+  const failure = (): void => {
+    console.error("예기치 않은 오류로 서버를 종료합니다.");
+    void backend.close().finally(() => process.exit(1));
+  };
+  global.process.on("uncaughtException", failure);
+  global.process.on("unhandledRejection", failure);
 }
-main().catch((exp: unknown) => {
-  console.log(exp);
+main().catch(() => {
+  console.error("서버 시작에 실패했습니다. 실행 설정을 확인하세요.");
   process.exit(-1);
 });

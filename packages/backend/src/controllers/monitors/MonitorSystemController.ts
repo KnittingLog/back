@@ -1,10 +1,10 @@
 import { ISystem } from "@knittinglog/api";
 import core from "@nestia/core";
-import { Controller } from "@nestjs/common";
+import { Controller, VERSION_NEUTRAL } from "@nestjs/common";
 import { SystemProvider } from "../../providers/monitors/SystemProvider";
 import { DateUtil } from "../../utils/DateUtil";
 
-@Controller("monitors/system")
+@Controller({ path: "monitors/system", version: VERSION_NEUTRAL })
 export class MonitorSystemController {
   /**
    * Get system information.

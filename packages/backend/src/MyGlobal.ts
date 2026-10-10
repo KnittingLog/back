@@ -28,7 +28,7 @@ const prismaSingleton = new Singleton(
   () =>
     new PrismaClient({
       adapter: new PrismaPg(
-        { connectionString: envSingleton.get().POSTGRES_URL },
+        { connectionString: MyGlobal.postgresConnectionString(envSingleton.get().POSTGRES_URL) },
         { schema: envSingleton.get().POSTGRES_SCHEMA },
       ),
     }),
@@ -41,6 +41,17 @@ const prismaSingleton = new Singleton(
  */
 export class MyGlobal {
   public static testing: boolean = false;
+
+  public static postgresConnectionString(value: string): string {
+    const url = new URL(value);
+    const options = url.searchParams.get("options")?.trim();
+    // URL의 options가 pg 설정을 덮어쓰므로 마지막 세션 옵션으로 UTC를 지정합니다.
+    url.searchParams.set(
+      "options",
+      options ? `${options} -c timezone=UTC` : "-c timezone=UTC",
+    );
+    return url.toString();
+  }
 
   public static get prisma(): PrismaClient {
     return prismaSingleton.get();
