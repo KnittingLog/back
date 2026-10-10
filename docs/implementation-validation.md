@@ -109,3 +109,66 @@ Prisma 캐시 접근과 loopback 바인딩에는 정상 실행 승인 경로를 
 수정 명령을 로컬에서 실행하여 모니터 2개, 단위 테스트 5개와 전체 테스트 타입 검사를 확인했습니다. YAML 구조와 모니터 선택 조건도 검사했습니다. Evidence 경고 20개는 남아 있습니다.
 
 격리 DB 수용 검사 `test/isolated-api.ts`는 별도 실행 경로로 유지합니다. 이번 수정은 그 검사의 안전 조건을 완화하거나 쓰기 승인을 자동으로 설정하지 않습니다. DB/API 44개 수용 검사의 CI 자동화나 재실행 통과를 뜻하지 않습니다.
+
+## 도메인 구조 변경 후 통합 검사 (2026-10-11)
+
+### 대상과 변경 범위
+
+- 실행 모드는 `LOCAL_ONLY`이고 호스트는 `luke-choiui-MacBookAir.local`이다. 기준 커밋은 `develop`의 `93c050a`이고 도메인 폴더 분리 및 이번 로컬 변경을 검사했다.
+- 기존 `127.0.0.1:50799`의 클러스터 경로가 `/private/tmp/knittinglog-tdd.TBW2BM/postgres`인 것을 읽기 전용으로 확인했다. 기존 서버·데이터는 변경하지 않았다.
+- 이번 새 클러스터는 PostgreSQL 18.4, `127.0.0.1:50801`, DB `knittinglog_tdd`를 사용했다. 생성 SQL과 보완 제약은 새 DB에만 적용했다. 운영 마이그레이션 적용은 아니다.
+- 실제 환경 파일을 변경하지 않았다. 접속 설정은 합성 테스트 값이다. 정책 fixture는 운영 문서가 아니며 운영자 계정·세션은 새 가입 API로 발급했다.
+- [반복 실행기](../scripts/run-isolated-integration.cjs)와 `test:integration:isolated` 명령을 추가했다. 명시한 쓰기 승인 없이는 DB를 만들지 않는다. 외부 연결 설정과 사용 중인 포트도 거부한다.
+- SQL의 과거 데이터 경로 하드코딩을 정확한 실행 대상 확인으로 바꿨다. 허용 포트는 기존 `50799`와 새 `50801`뿐이다. 일반 DB 포트, URL 쿼리·앵커와 Unix socket 우회는 허용하지 않는다.
+
+### 발견한 실패와 수정
+
+첫 유효한 HTTP 실행은 44개 중 43개 통과, 버전 검사 1개 실패, BLOCKED 0개였다. `/policy-documents` 요청은 404였지만 `text/html`을 반환했다. 설치된 NestJS 12의 접두어 밖 요청은 공통 예외 필터의 JSON 응답을 거치지 않았다.
+
+DB 없는 회귀 검사에도 JSON 오류 본문 검사를 추가했다. 수정 전 이 검사는 실패했다. [MyBackend.configure](../packages/backend/src/MyBackend.ts)는 접두어 밖의 요청에 `{ code: "NOT_FOUND", message: "대상을 찾을 수 없습니다." }`를 반환한다. 정상 v1과 모니터 요청은 기존 처리기로 전달한다. 회귀 검사에서 CORS preflight의 204도 확인했다.
+
+임시 실행기 준비 단계에서 SQL stdout와 Prisma 진단 stderr의 혼합, psql 종료 코드 처리를 발견했다. SQL과 진단 출력을 분리하고 실패는 명시한 SQL 예외로 중단하도록 수정했다. 이 준비 실패는 업무 기능의 RED로 계산하지 않았다. 각 임시 클러스터는 실패 시에도 종료했다.
+
+### 최종 결과
+
+| 범위 | 결과 |
+|---|---|
+| 실제 업무 HTTP | 44개 통과, 실패 0개, BLOCKED 0개. 가입·인증·차단·이관·동시성·카운터·타이머·신고·버저닝 포함 |
+| 생성 SDK 호출 | 실제 정책 조회·모니터 조회·익명 인증 거부 통과 |
+| 실제 DB 제약 | CHECK 거부 34개, 부분 고유 인덱스 거부·종료 이력 허용 4개, 물리 FK 0개 |
+| SQL 검사 롤백 | 모든 업무 테이블의 검사 행이 0개인 것을 seed 전에 확인 |
+| 접속·승인 보호 | 데이터 경로 누락·경로 불일치·포트 불일치·승인 누락·승인 거부·Unix socket 우회 거부 |
+| 실제 UTC·재동의 | 시각 왕복과 필수 재동의 경계 통과. 재동의 fixture 전체 롤백 |
+| 정적 검사 | lint·전체 테스트 타입/Evidence·backend/API 코드 그래프 통과 |
+| 생성·빌드 | SDK 재생성과 전체 빌드 통과. 빌드 경고 0개 |
+| 단위·모니터 | 독립 테스트 5개 파일과 DB 없는 모니터 2개 통과 |
+| SDK·OpenAPI 비교 | SDK 소스 76개가 기준 커밋과 동일. 재생성 기준본과 OpenAPI JSON 구조도 동일 |
+| 요구사항 Evidence | 상태 전이·피드/신고의 실제 구현과 검사 근거 연결. 경고 20개에서 18개로 감소 |
+
+새 DB의 전체 HTTP 검사를 반복했다. 각 실행에서 API는 임시 loopback 포트를 사용했다. 검사 종료 뒤 새 PostgreSQL 서버를 중지했다. 데이터와 로그는 삭제하지 않았다. 일시정지 타이머 검사를 별도 신규 사례로 더하지 않았다. 기존 44개에 포함된 동일 함수이다.
+
+실행 명령은 다음과 같다. 실제 환경 파일의 값을 전달하지 않는다.
+
+```sh
+KNITTINGLOG_TEST_ALLOW_WRITES=1 pnpm -C packages/backend test:integration:isolated
+pnpm lint
+pnpm check:evidence
+pnpm check:graph
+pnpm -C packages/backend build:sdk
+pnpm build
+git diff --check
+```
+
+단위·모니터 명령은 CI와 같은 범위를 사용했다. 최종 정적 검사 로그와 종료 코드는 `/private/tmp/knittinglog-domain-checks`에 보존했다. 실제 DB/API 로그는 각 실행기가 출력한 `/private/tmp/knittinglog-tdd.*` 아래에 보존했다.
+
+최종 전체 실행의 데이터 경로는 `/private/tmp/knittinglog-tdd.3MEUEM/postgres`이다. 같은 폴더의 `results.json`, `isolated-api.log`, `erd-constraints.log`와 `guard-*.log`를 보존했다. 이 실행은 SDK 생성·빌드가 종료한 뒤 실행했다. 보호 조건 6개, SQL 롤백, DB 통합 검사와 HTTP 44개가 모두 통과했고 `stop`의 종료 코드는 0이다.
+
+### 남은 경계
+
+Evidence의 18개 제목은 여전히 전체 근거가 없다. 일부 구현·검사 결과를 포괄 태그로 전체 충족처럼 표시하지 않았다. [Evidence 검토 결과](ttsc-graphs.md#근거-검토-결과-2026-10-11)에 이유를 분리했다. 요구사항 전체, DDL 승인, 운영 이행·복원, 전체 유출 비밀번호 공급자, UI와 파일 처리가 완료됐다는 뜻은 아니다.
+
+이번 실행은 결정적인 이관 중간 실패 주입, 실제 파일·PITR 복구, 부하와 다중 인스턴스 수용을 대신하지 않는다. 멤버십 조회의 기존 중복 경로는 폴더 변경과 같은 상태로 유지했다. 위 검증 시점에는 commit, push, 운영 DB 반영과 배포를 수행하지 않았다. GitHub Actions에서도 통합 검사를 자동 실행하도록 변경하지 않았다.
+
+### 후속 Git 게시 승인
+
+사용자는 검증 후 변경사항의 의미 단위 commit과 push를 명시적으로 요청했다. 게시 대상은 `origin`의 `https://github.com/KnittingLog/back`, 브랜치는 `develop`이다. 운영 DB 반영·배포와 머지는 이번 승인 범위가 아니다. 현재 build workflow는 `main` push와 pull request를 대상으로 하므로 `develop` push만으로 원격 CI 통과를 주장하지 않는다.
