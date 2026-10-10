@@ -2,6 +2,14 @@ bin/
 dist/
 lib/
 node_modules/
+.pnpm-store/
+.ttsc/
+.codex/
+
+# 로컬 복사본과 테스트 산출물은 추적하지 않는다.
+* 2.ts
+test-results/
+playwright-report/
 packages/backend/prisma/migrations
 packages/backend/prisma/schema/migrations
 packages/backend/src/prisma
