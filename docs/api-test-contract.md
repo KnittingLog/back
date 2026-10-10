@@ -37,6 +37,25 @@ pnpm -C packages/backend exec ttsc -p test/tsconfig.json --noEmit
 
 기존 pnpm test와 webpack:test는 마이그레이션 폴더 삭제와 DB 초기화 경로를 포함합니다. 이 작업에서는 실행하지 않습니다.
 
+### 새 클러스터의 통합 검사
+
+다음 명령은 기존 서버를 재사용하지 않습니다. 로컬 PostgreSQL의 `initdb`, `pg_ctl`, `createdb`, `psql`과 설치된 프로젝트 의존성이 필요합니다.
+
+```sh
+KNITTINGLOG_TEST_ALLOW_WRITES=1 pnpm -C packages/backend test:integration:isolated
+```
+
+- [격리 실행기](../scripts/run-isolated-integration.cjs)는 새 `/private/tmp/knittinglog-tdd.*/postgres` 클러스터를 만듭니다. 접속 주소는 `127.0.0.1:50801`이고 DB 이름은 `knittinglog_tdd`입니다.
+- 실행기는 실제 데이터 경로·서버 주소·포트를 조회한 뒤 이 새 DB에만 생성 SQL과 보완 제약을 적용합니다. 기존 마이그레이션 폴더와 환경 파일을 변경하지 않습니다.
+- 이미 사용 중인 `50801` 포트와 외부 `POSTGRES_URL`·`KNITTINGLOG_TEST_URL`·PostgreSQL service 설정은 실행 전에 거부합니다. 기존 서버를 중지하거나 다른 DB로 자동 전환하지 않습니다.
+- SQL 검사는 정확한 `expected_data_directory`와 `expected_port`, 명시한 쓰기 승인을 확인합니다. 경로 누락·경로 불일치·포트 불일치·승인 누락·승인 거부·Unix socket 접속의 6개 거부 조건도 검사합니다.
+- CHECK 34개, 부분 고유 인덱스 4개와 물리 FK 부재를 검사합니다. 검사 행을 모두 롤백한 뒤 업무 테이블이 비어 있는지 확인합니다.
+- 실행기는 테스트 전용 정책 2개를 생성하고 UTC·필수 재동의·실제 HTTP 44개 검사를 실행합니다. 일시정지 타이머 검사는 이 44개에 포함됩니다.
+- 성공과 실패 모두 새 클러스터를 종료합니다. 생성한 검사 데이터와 비밀값을 출력하지 않는 로그는 해당 임시 폴더에 보존합니다. 기존 `50799` 클러스터는 변경하지 않습니다.
+- 쓰기 승인값은 실행 명령에서 사용자가 전달합니다. CI가 이를 자동 설정하거나 통합 검사를 실행하도록 변경하지 않았습니다.
+
+기존 `50799` 대상을 직접 검사하는 경로는 유지합니다. 별도의 새 클러스터를 검사할 때만 `KNITTINGLOG_TEST_POSTGRES_PORT=50801`을 명시합니다. [접속 보호 검사](../packages/backend/test/unit/postgres-target.ts)는 일반 DB 포트와 URL 쿼리·앵커를 계속 거부합니다.
+
 ## 공통 HTTP 계약
 
 - 가입과 새 리소스 생성은 201을 반환합니다. 조회와 갱신은 200을 반환합니다.

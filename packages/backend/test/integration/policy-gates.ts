@@ -8,7 +8,7 @@ import { assertIsolatedPostgresUrl } from "../helpers/IsolatedPostgres";
 class RollbackVerified extends Error {}
 
 async function main(): Promise<void> {
-  assertIsolatedPostgresUrl(process.env.POSTGRES_URL ?? "");
+  assertIsolatedPostgresUrl(process.env.POSTGRES_URL ?? "", process.env.KNITTINGLOG_TEST_POSTGRES_PORT);
   try {
     try {
       await K.transaction(async (tx) => {

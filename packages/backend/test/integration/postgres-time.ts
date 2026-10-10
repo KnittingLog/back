@@ -5,7 +5,7 @@ import { KnittingLogContext as K } from "../../src/providers/common/KnittingLogC
 import { assertIsolatedPostgresUrl } from "../helpers/IsolatedPostgres";
 
 async function main(): Promise<void> {
-  assertIsolatedPostgresUrl(process.env.POSTGRES_URL ?? "");
+  assertIsolatedPostgresUrl(process.env.POSTGRES_URL ?? "", process.env.KNITTINGLOG_TEST_POSTGRES_PORT);
   try {
     await K.transaction(async (tx) => {
       const [identity] = await tx.$queryRaw<{ directory: string }[]>`SELECT current_setting('data_directory') AS directory`;

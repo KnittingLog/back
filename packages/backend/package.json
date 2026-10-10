@@ -31,6 +31,7 @@
     "ttsc": "node ../../scripts/ttsc-cache.cjs ttsc",
     "ttsx": "node ../../scripts/ttsc-cache.cjs ttsx",
     "test:knittinglog": "node ../../scripts/ttsc-cache.cjs ttsx --project test/tsconfig.json test/knittinglog.ts",
+    "test:integration:isolated": "node ../../scripts/run-isolated-integration.cjs",
     "build:erd": "prisma validate --schema=prisma/schema && prisma generate --schema=prisma/schema --generator markdown",
     "check:erd": "node scripts/check-erd.cjs",
     "check:evidence": "node ../../scripts/ttsc-cache.cjs ttsc -p test/tsconfig.evidence.json --noEmit",

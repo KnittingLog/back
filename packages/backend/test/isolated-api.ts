@@ -21,7 +21,7 @@ async function main(): Promise<void> {
   assert.equal(process.env.KNITTINGLOG_TEST_ALLOW_WRITES, "1");
   assert.equal(process.env.MODE, "local");
   if (!baseline) {
-    assertIsolatedPostgresUrl(process.env.POSTGRES_URL ?? "");
+    assertIsolatedPostgresUrl(process.env.POSTGRES_URL ?? "", process.env.KNITTINGLOG_TEST_POSTGRES_PORT);
     const [identity] = await MyGlobal.prisma.$queryRaw<{ directory: string }[]>`SELECT current_setting('data_directory') AS directory`;
     assert.ok(identity?.directory.startsWith("/private/tmp/knittinglog-tdd."));
   }

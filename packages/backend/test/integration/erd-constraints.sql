@@ -1,13 +1,32 @@
 \set ON_ERROR_STOP on
+\if :{?expected_data_directory}
+\else
+  DO $$ BEGIN RAISE EXCEPTION '검사할 일회용 클러스터 경로가 필요합니다'; END $$;
+\endif
+\if :{?expected_port}
+\else
+  \set expected_port 50799
+\endif
+\getenv allow_writes KNITTINGLOG_TEST_ALLOW_WRITES
+\if :{?allow_writes}
+\else
+  DO $$ BEGIN RAISE EXCEPTION '격리 DB 쓰기 승인이 필요합니다'; END $$;
+\endif
 BEGIN;
+SELECT set_config('knittinglog_test.expected_data_directory', :'expected_data_directory', true);
+SELECT set_config('knittinglog_test.allow_writes', :'allow_writes', true);
+SELECT set_config('knittinglog_test.expected_port', :'expected_port', true);
 
 -- 승인한 일회용 로컬 클러스터만 검사합니다. 다른 대상에서는 쓰기 전에 중단합니다.
 DO $$
 BEGIN
   IF current_database() <> 'knittinglog_tdd'
-    OR current_setting('data_directory') <> '/private/tmp/knittinglog-tdd.TBW2BM/postgres'
-    OR inet_server_port() <> 50799
-    OR inet_server_addr() <> '127.0.0.1'::inet
+    OR current_setting('knittinglog_test.allow_writes') <> '1'
+    OR current_setting('data_directory') <> current_setting('knittinglog_test.expected_data_directory')
+    OR current_setting('data_directory') !~ '^/private/tmp/knittinglog-tdd\.[^/]+/postgres$'
+    OR current_setting('knittinglog_test.expected_port') NOT IN ('50799', '50801')
+    OR inet_server_port()::text IS DISTINCT FROM current_setting('knittinglog_test.expected_port')
+    OR inet_server_addr() IS DISTINCT FROM '127.0.0.1'::inet
   THEN RAISE EXCEPTION '일회용 검증 클러스터가 아닙니다'; END IF;
   IF (SELECT count(*) FROM pg_constraint c JOIN pg_namespace n ON n.oid = c.connamespace
       WHERE c.contype = 'f' AND n.nspname IN ('accounts', 'social', 'projects', 'community')) <> 0

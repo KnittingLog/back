@@ -34,6 +34,15 @@ check("isolated PostgreSQL target rejects query overrides before connection", ()
   ]) assert.throws(() => assertIsolatedPostgresUrl(uri));
 });
 
+check("new isolated cluster port must be explicitly pinned", () => {
+  const alternate = fixture.replace("50799", "50801");
+  assert.throws(() => assertIsolatedPostgresUrl(alternate));
+  assertIsolatedPostgresUrl(alternate, "50801");
+  assert.throws(() => assertIsolatedPostgresUrl(fixture, "50801"));
+  assert.throws(() => assertIsolatedPostgresUrl(fixture.replace("50799", "5432"), "5432"));
+  assert.throws(() => assertIsolatedPostgresUrl(`${alternate}?host=example.invalid`, "50801"));
+});
+
 check("PostgreSQL URL options cannot override session UTC", () => {
   const cases = [fixture,
     `${fixture}?options=-c%20timezone%3DAsia%2FSeoul`,
