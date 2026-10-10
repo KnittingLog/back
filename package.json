@@ -9,7 +9,15 @@
     "format": "pnpm -r --if-present format",
     "lint": "pnpm -r --if-present lint",
     "start": "pnpm -C packages/backend start",
-    "test": "pnpm -C packages/backend test"
+    "test": "pnpm -C packages/backend test",
+    "build:erd": "pnpm -C packages/backend build:erd",
+    "check:evidence": "pnpm -C packages/backend check:evidence",
+    "check:graph": "node scripts/ttsc-cache.cjs node scripts/check-ttsc-graph.cjs",
+    "ttsc": "node scripts/ttsc-cache.cjs ttsc",
+    "ttsx": "node scripts/ttsc-cache.cjs ttsx",
+    "ttsc-graph": "node scripts/ttsc-cache.cjs ttsc-graph",
+    "graph:backend": "pnpm -C packages/backend graph",
+    "graph:api": "pnpm -C packages/api graph"
   },
   "repository": {
     "type": "git",
@@ -22,10 +30,7 @@
   },
   "homepage": "https://github.com/samchon/backend",
   "packageManager": "pnpm@10.10.0",
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "prisma",
-      "@prisma/engines"
-    ]
+  "devDependencies": {
+    "@ttsc/lint": "catalog:typescript"
   }
 }

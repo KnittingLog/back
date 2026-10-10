@@ -9,6 +9,8 @@ extend-ignore-re = [
 Jeongho = "Jeongho"
 Nam = "Nam"
 typia = "typia"
+# 복구 시간 목표의 약어를 기술 용어로 허용한다.
+RTO = "RTO"
 
 [files]
 extend-exclude = ["*.json"]

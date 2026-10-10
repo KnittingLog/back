@@ -9,17 +9,19 @@
   "scripts": {
     "build": "pnpm build:sdk && pnpm build:ttsc && pnpm build:rolldown",
     "build:sdk": "cd ../backend && pnpm build:sdk",
-    "build:ttsc": "rimraf lib && ttsc -p tsconfig.json",
-    "build:rolldown": "rolldown -c",
-    "format": "ttsc format -p tsconfig.json",
-    "lint": "ttsc -p tsconfig.json --noEmit",
-    "prepack": "pnpm build"
+    "build:ttsc": "rimraf lib && node ../../scripts/ttsc-cache.cjs ttsc -p tsconfig.json",
+    "build:rolldown": "node ../../scripts/ttsc-cache.cjs rolldown -c",
+    "format": "node ../../scripts/ttsc-cache.cjs ttsc format -p tsconfig.json",
+    "lint": "node ../../scripts/ttsc-cache.cjs ttsc -p tsconfig.json --noEmit",
+    "prepack": "pnpm build",
+    "ttsc": "node ../../scripts/ttsc-cache.cjs ttsc",
+    "ttsx": "node ../../scripts/ttsc-cache.cjs ttsx",
+    "graph": "node ../../scripts/ttsc-cache.cjs ttsc-graph --cwd . --tsconfig tsconfig.json"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/KnittingLog/back"
   },
-
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/KnittingLog/back/issues"
@@ -44,7 +46,8 @@
     "rolldown": "catalog:rolldown",
     "tinyglobby": "^0.2.12",
     "ttsc": "catalog:typescript",
-    "typescript": "catalog:typescript"
+    "typescript": "catalog:typescript",
+    "@ttsc/graph": "catalog:typescript"
   },
   "publishConfig": {
     "main": "./lib/index.js",

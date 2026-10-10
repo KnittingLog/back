@@ -1,0 +1,15 @@
+diff --git a/linthost/rules_format_trailing_comma.go b/linthost/rules_format_trailing_comma.go
+index 679e57021c03c18c44f021f861a0b51ae5601c1a..d524e30f205e3db5eccde11134d8655e259ed8e3 100644
+--- a/linthost/rules_format_trailing_comma.go
++++ b/linthost/rules_format_trailing_comma.go
+@@ -237,6 +237,10 @@ func (formatTrailingComma) Check(ctx *Context, node *shimast.Node) {
+     if node.Parent == nil {
+       return
+     }
++    // infer와 매핑 타입의 매개변수는 쉼표로 구분하는 선언 목록이 아니다.
++    if node.Parent.Kind == shimast.KindInferType || node.Parent.Kind == shimast.KindMappedType {
++      return
++    }
+     list := node.Parent.TypeParameterList()
+     if list == nil || len(list.Nodes) == 0 || list.Nodes[len(list.Nodes)-1] != node {
+       return

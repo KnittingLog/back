@@ -1,402 +1,1116 @@
+// 뜨개로그 서비스의 초기 테이블 설계입니다.
+// relation은 논리 관계를 표시합니다. 물리 FK는 생성하지 않습니다.
 generator client {
-  provider        = "prisma-client"
-  output          = "../../src/prisma"
-  moduleFormat    = "cjs"
-  previewFeatures = ["postgresqlExtensions", "views"]
+  provider     = "prisma-client"
+  output       = "../../src/prisma"
+  moduleFormat = "cjs"
 }
 
 datasource db {
-  provider   = "postgresql"
-  extensions = [pg_trgm]
+  provider     = "postgresql"
+  relationMode = "prisma"
+  schemas      = ["accounts", "social", "projects", "community"]
 }
 
 generator markdown {
   provider = "prisma-markdown"
-  title    = "PROJECT"
+  title    = "뜨개로그 ERD - 논리 관계, 물리 FK 없음"
   output   = "../../docs/ERD.md"
 }
 
-//-----------------------------------------------------------
-// ARTICLES
-//-----------------------------------------------------------
-/// Attachment File.
-///
-/// Every attachment files that are managed in current system.
-///
-/// For reference, it is possible to omit one of file name or extension like 
-/// `.gitignore` or `README` case, but not possible to omit both of them.
-///
-/// @namespace Articles
-/// @author Samchon
-model attachment_files {
-  //----
-  // COLUMNS
-  //----
-  /// @format uuid
-  id String @id @db.Uuid
+/// 프로필 기록의 공개 범위입니다. 공동 프로젝트의 권한과 구분합니다.
+enum e_profile_visibility {
+  public
+  friends
+  private
 
-  /// File name, except extension.
-  ///
-  /// If there's file `.gitignore`, then its name is an empty string.
-  ///
-  /// @maxLength 255
-  name String @db.VarChar
-
-  /// Extension.
-  ///
-  /// Possible to omit like `README` case.
-  ///
-  /// @minLength 1
-  /// @maxLength 8
-  extension String? @db.VarChar
-
-  /// URL path of the real file.
-  ///
-  /// @format url
-  url String @db.VarChar
-
-  /// Creation time of file.
-  ///
-  /// @format date-time
-  created_at DateTime @db.Timestamptz
-
-  //----
-  // RELATIONS
-  //----
-  bbs_article_snapshot_files          bbs_article_snapshot_files[]
-  bbs_article_comment_snapshots_files bbs_article_comment_snapshot_files[]
-
-  @@index([url])
+  @@schema("accounts")
 }
 
-/// Article entity.
-/// 
-/// `bbs_articles` is a super-type entity of all kinds of articles in the 
-/// current backend system, literally shaping individual articles of 
-/// the bulletin board.
-///
-/// And, as you can see, the elements that must inevitably exist in the 
-/// article, such as the title or the body, do not exist in the `bbs_articles`, 
-/// but exist in the subsidiary entity, {@link bbs_article_snapshots}, as a 
-/// 1: N relationship, which is because a new snapshot record is published 
-/// every time the article is modified.
-///
-/// The reason why a new snapshot record is published every time the article 
-/// is modified is to preserve the evidence. Due to the nature of e-community, 
-/// there is always a threat of dispute among the participants. And it can 
-/// happen that disputes arise through articles or comments, and to prevent 
-/// such things as modifying existing articles to manipulate the situation, 
-/// the article is designed in this structure.
-///
-/// In other words, to keep evidence, and prevent fraud.
-///
-/// @namespace Articles
-/// @author Samchon
-model bbs_articles {
-  /// @format uuid
-  id String @id @db.Uuid
+/// 개인 작업 공간의 작업 상태입니다. 참여 권한과 구분합니다.
+enum e_workspace_status {
+  active
+  paused
+  done
 
-  /// Creation time of article.
-  created_at DateTime @db.Timestamptz
-
-  /// Deletion time of article.
-  ///
-  /// To keep evidence, do not delete the article, but just mark it as 
-  /// deleted.
-  deleted_at DateTime? @db.Timestamptz
-
-  //----
-  // RELATIONS
-  //----
-  /// List of snapshots.
-  ///
-  /// It is created for the first time when an article is created, and is
-  /// accumulated every time the article is modified.
-  ///
-  /// @minItems 1
-  snapshots bbs_article_snapshots[]
-
-  /// List of comments.
-  comments bbs_article_comments[]
-
-  mv_last mv_bbs_article_last_snapshots?
-
-  @@index([created_at])
+  @@schema("projects")
 }
 
-/// Snapshot of article.
-///
-/// `bbs_article_snapshots` is a snapshot entity that contains the contents of
-/// the article, as mentioned in {@link bbs_articles}, the contents of the 
-/// article are separated from the article record to keep evidence and prevent 
-/// fraud.
-///
-/// @namespace Articles
-/// @author Samchon
-model bbs_article_snapshots {
-  //----
-  // COLUMNS
-  //----
-  /// @format uuid
-  id String @id @db.Uuid
+/// 친구 요청의 처리 상태입니다.
+enum e_friend_request_status {
+  pending
+  accepted
+  rejected
+  cancelled
 
-  /// Belong article's {@link bbs_articles.id}
-  ///
-  /// @format uuid
-  bbs_article_id String @db.Uuid
-
-  /// Format of body.
-  ///
-  /// Same meaning with extension like `html`, `md`, `txt`.
-  format String @db.VarChar
-
-  /// Title of article.
-  title String @db.VarChar
-
-  /// Content body of article.
-  body String
-
-  /// Creation time of record.
-  ///
-  /// It means creation time or update time or article.
-  created_at DateTime @db.Timestamptz
-
-  //----
-  // RELATIONS
-  //----
-  /// Belong article info.
-  article bbs_articles @relation(fields: [bbs_article_id], references: [id], onDelete: Cascade)
-
-  /// List of wrappers of attachment files.
-  to_files bbs_article_snapshot_files[]
-
-  mv_last mv_bbs_article_last_snapshots?
-
-  @@index([bbs_article_id, created_at])
-  @@index([title(ops: raw("gin_trgm_ops"))], type: Gin)
-  @@index([body(ops: raw("gin_trgm_ops"))], type: Gin)
+  @@schema("social")
 }
 
-/// Attachment file of article snapshot.
-///
-/// `bbs_article_snapshot_files` is an entity that shapes the attached files of
-/// the article snapshot.
-///
-/// `bbs_article_snapshot_files` is a typical pair relationship table to 
-/// resolve the M: N relationship between {@link bbs_article_snapshots} and
-/// {@link attachment_files} tables. Also, to ensure the order of the attached
-/// files, it has an additional `sequence` attribute, which we will continue to
-/// see in this documents.
-///
-/// @namespace Articles
-/// @author Samchon
-model bbs_article_snapshot_files {
-  //----
-  // COLUMNS
-  //----
-  /// @format uuid
-  id String @id @db.Uuid
+/// 프로젝트 초대의 처리 상태입니다.
+enum e_invitation_status {
+  pending
+  accepted
+  rejected
+  cancelled
 
-  /// Belonged snapshot's {@link bbs_article_snapshots.id}
-  ///
-  /// @format uuid
-  bbs_article_snapshot_id String @db.Uuid
-
-  /// Belonged file's {@link attachment_files.id}
-  ///
-  /// @format uuid
-  attachment_file_id String @db.Uuid
-
-  /// Sequence of attachment file in the snapshot.
-  ///
-  /// @format int
-  sequence Int @db.Integer
-
-  //----
-  // RELATIONS
-  //----
-  /// Belonged article.
-  snapshot bbs_article_snapshots @relation(fields: [bbs_article_snapshot_id], references: [id], onDelete: Cascade)
-
-  /// Belonged file.
-  file attachment_files @relation(fields: [attachment_file_id], references: [id], onDelete: Cascade)
-
-  @@index([bbs_article_snapshot_id])
-  @@index([attachment_file_id])
+  @@schema("projects")
 }
 
-/// Comment written on an article.
-///
-/// `bbs_article_comments` is an entity that shapes the comments written on an
-/// article.
-///
-/// And for this comment, as in the previous relationship between 
-/// {@link bbs_articles} and {@link bbs_article_snapshots}, the content body 
-/// of the comment is stored in the sub {@link bbs_article_comment_snapshots} 
-/// table for evidentialism, and a new snapshot record is issued every time 
-/// the comment is modified.
-///
-/// Also, `bbs_article_comments` is expressing the relationship of the 
-/// hierarchical reply structure through the `parent_id` attribute.
-///
-/// @namespace Articles
-/// @author Samchon
-model bbs_article_comments {
-  //----
-  // COLUMNS
-  //----
-  /// @format uuid
-  id String @id @db.Uuid
+/// 기록에 저장할 시간의 입력 경로입니다. 진행 중 타이머는 별도 행으로 저장합니다.
+enum e_record_source {
+  timer
+  manual
 
-  /// Belonged article's {@link bbs_articles.id}
-  /// 
-  /// @format uuid
-  bbs_article_id String @db.Uuid
-
-  /// Parent comment's {@link bbs_article_comments.id}
-  ///
-  /// Used to express the hierarchical reply structure.
-  ///
-  /// @format uuid
-  parent_id String? @db.Uuid
-
-  /// Creation time of comment.
-  created_at DateTime @db.Timestamptz
-
-  /// Deletion time of comment.
-  ///
-  /// Do not allow to delete the comment, but just mark it as deleted, 
-  /// to keep evidence.
-  deleted_at DateTime? @db.Timestamptz
-
-  //----
-  // RELATIONS
-  //----
-  /// Belonged article.
-  article bbs_articles @relation(fields: [bbs_article_id], references: [id], onDelete: Cascade)
-
-  /// Parent comment.
-  ///
-  /// Only when reply case.
-  parent bbs_article_comments? @relation("bbs_article_comments_reply", fields: [parent_id], references: [id], onDelete: Cascade)
-
-  /// List of children comments.
-  ///
-  /// Reply comments of current.
-  children bbs_article_comments[] @relation("bbs_article_comments_reply")
-
-  /// List of snapshots.
-  ///
-  /// It is created for the first time when a comment is created, and is
-  /// accumulated every time the comment is modified.
-  ///
-  /// @minItems 1
-  snapshots bbs_article_comment_snapshots[]
-
-  @@index([bbs_article_id, parent_id, created_at])
+  @@schema("projects")
 }
 
-/// Snapshot of comment.
-///
-/// `bbs_article_comment_snapshots` is a snapshot entity that contains the 
-/// contents of the comment.
-///
-/// As mentioned in {@link bbs_article_comments}, designed to keep evidence 
-/// and prevent fraud.
-///
-/// @namespace Articles
-/// @author Samchon
-model bbs_article_comment_snapshots {
-  //----
-  // COLUMNS
-  //----
-  /// @format uuid
-  id String @id @db.Uuid
+/// 서버가 보존하는 타이머 상태입니다. 종료는 기록 저장과 함께 처리합니다.
+enum e_timer_status {
+  running
+  paused
+  stopped
 
-  /// Belonged article's {@link bbs_article_comments.id}
-  ///
-  /// @format uuid
-  bbs_article_comment_id String @db.Uuid
-
-  /// Format of content body.
-  ///
-  /// Same meaning with extension like `html`, `md`, `txt`.
-  format String @db.VarChar
-
-  /// Content body of comment.
-  body String
-
-  /// Creation time of record.
-  ///
-  /// It means creation time or update time or comment.
-  created_at DateTime @db.Timestamptz
-
-  //----
-  // RELATIONS
-  //----
-  /// Belong comment info.
-  comment bbs_article_comments @relation(fields: [bbs_article_comment_id], references: [id], onDelete: Cascade)
-
-  /// List of wrappers of attachment files.
-  to_files bbs_article_comment_snapshot_files[]
-
-  @@index([bbs_article_comment_id, created_at])
-  @@index([body(ops: raw("gin_trgm_ops"))], type: Gin)
+  @@schema("projects")
 }
 
-/// Attachment file of comment snapshot.
-/// 
-/// `bbs_article_comment_snapshot_files` is an entity resolving the M:N 
-/// relationship between {@link bbs_article_comment_snapshots} and 
-/// {@link attachment_files} tables.
-/// 
-/// @namespace Articles
-/// @author Samchon
-model bbs_article_comment_snapshot_files {
-  //----
-  // COLUMNS
-  //----
-  /// @format uuid
-  id String @id @db.Uuid
+/// 화면 이모지와 구분하는 기록 반응 코드입니다.
+enum e_reaction_code {
+  like
+  heart
+  clap
+  celebrate
+  wow
 
-  /// Belonged snapshot's {@link bbs_article_comment_snapshots.id}
-  ///
-  /// @format uuid
-  bbs_article_comment_snapshot_id String @db.Uuid
-
-  /// Belonged file's {@link attachment_files.id}
-  ///
-  /// @format uuid
-  attachment_file_id String @db.Uuid
-
-  /// Sequence order.
-  ///
-  /// Sequence order of the attached file in the belonged snapshot.
-  ///
-  /// @type int
-  sequence Int @db.Integer
-
-  //----
-  // RELATIONS
-  //----
-  /// Belonged article.
-  snapshot bbs_article_comment_snapshots @relation(fields: [bbs_article_comment_snapshot_id], references: [id], onDelete: Cascade)
-
-  /// Belonged file.
-  file attachment_files @relation(fields: [attachment_file_id], references: [id], onDelete: Cascade)
-
-  @@index([bbs_article_comment_snapshot_id])
-  @@index([attachment_file_id])
+  @@schema("projects")
 }
 
-/// @hidden
-/// @author Samchon
-model mv_bbs_article_last_snapshots {
-  bbs_article_id          String @id @db.Uuid
-  bbs_article_snapshot_id String @db.Uuid
+/// 이전 신고의 해석을 보존하는 신고 사유 코드입니다.
+enum e_report_reason {
+  spam
+  abuse
+  inappropriate
+  privacy
+  other
 
-  article  bbs_articles          @relation(fields: [bbs_article_id], references: [id], onDelete: Cascade)
-  snapshot bbs_article_snapshots @relation(fields: [bbs_article_snapshot_id], references: [id], onDelete: Cascade)
+  @@schema("community")
+}
 
-  @@unique([bbs_article_snapshot_id])
+/// 운영자가 관리하는 신고 처리 상태입니다.
+enum e_report_status {
+  received
+  reviewing
+  closed
+
+  @@schema("community")
+}
+
+/// 다른 계정에 재발급하지 않는 계정 식별자 종류입니다.
+enum e_identifier_kind {
+  login_id
+  handle
+
+  @@schema("accounts")
+}
+
+/// 서비스 계정입니다. 로그인 ID와 공개 계정 ID를 분리합니다.
+/// 비밀번호는 해시만 저장합니다. 탈퇴 시 공개 프로필과 인증 비밀값을 제거합니다.
+/// @namespace 계정
+/// @erd 친구와차단
+/// @erd 프로젝트
+/// @erd 기록
+/// @erd 커뮤니티
+model users {
+  /// 사용자 식별자입니다. 가입 시 비즈니스 계층에서 감사 주체도 지정합니다.
+  id                      String               @id(map: "pk_users") @default(uuid()) @db.Uuid
+  /// 로그인에만 사용하는 값입니다. 다른 사용자에게 공개하지 않습니다.
+  login_id                String               @unique(map: "ux_users_login_id") @db.VarChar(32)
+  /// 현재 공개 계정 ID입니다. 탈퇴 시 제거하며 과거 값은 식별자 예약에 보존합니다.
+  handle                  String?              @unique(map: "ux_users_handle") @db.VarChar(32)
+  /// 사용자에게 표시하는 이름입니다. 탈퇴 후에는 저장값 대신 탈퇴한 사용자를 표시합니다.
+  nickname                String?              @db.VarChar(100)
+  /// 검증용 비밀번호 해시입니다. 원본 비밀번호는 저장하지 않습니다.
+  password_hash           String?              @db.Text
+  /// 접근 토큰의 유효성 번호입니다. 비밀번호 재설정과 탈퇴 시 증가시킵니다.
+  auth_version            Int                  @default(0)
+  /// 사용자가 작성한 소개입니다.
+  biography               String?              @db.Text
+  /// 프로필 사진의 저장 객체 식별자입니다. 표시 주소는 조회 시 생성합니다.
+  profile_photo_object_id String?              @db.Uuid
+  /// 프로필 기록과 총 작업 시간의 공개 범위입니다.
+  visibility              e_profile_visibility @default(public)
+  /// 행을 생성한 시각입니다.
+  created_at              DateTime             @default(now()) @db.Timestamptz(3)
+  /// 서버가 확인한 생성 주체의 식별자입니다.
+  created_by              String               @db.Uuid
+  /// 행을 최근 변경한 시각입니다.
+  updated_at              DateTime             @default(now()) @updatedAt @db.Timestamptz(3)
+  /// 서버가 확인한 최근 변경 주체의 식별자입니다.
+  updated_by              String               @db.Uuid
+  /// 논리삭제 시각입니다. 삭제되지 않았으면 NULL입니다.
+  deleted_at              DateTime?            @db.Timestamptz(3)
+
+  sessions                 auth_sessions[]
+  identifiers              user_identifiers[]
+  recovery_codes           recovery_codes[]
+  commands                 command_receipts[]
+  timers                   project_timers[]
+  consents                 policy_consents[]
+  friend_requests_sent     friend_requests[]     @relation("friend_request_sender")
+  friend_requests_received friend_requests[]     @relation("friend_request_recipient")
+  friendships_low          friendships[]         @relation("friendship_low")
+  friendships_high         friendships[]         @relation("friendship_high")
+  blocks_sent              user_blocks[]         @relation("block_actor")
+  blocks_received          user_blocks[]         @relation("block_target")
+  projects_owned           projects[]
+  memberships              project_memberships[]
+  workspaces               project_workspaces[]
+  profile_photo            stored_objects?       @relation("profile_photo", fields: [profile_photo_object_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  owned_objects            stored_objects[]      @relation("stored_object_owner")
+  invitations_sent         project_invitations[] @relation("invitation_sender")
+  invitations_received     project_invitations[] @relation("invitation_recipient")
+  records                  project_records[]
+  record_comments          record_comments[]
+  record_reactions         record_reactions[]
+  posts                    posts[]
+  post_comments            post_comments[]
+  post_likes               post_likes[]
+  reports_sent             reports[]             @relation("report_actor")
+  reports_received         reports[]             @relation("report_target")
+
+  @@index([nickname, id], map: "ix_users_nickname_id")
+  @@index([profile_photo_object_id], map: "ix_users_profile_photo")
+  @@schema("accounts")
+}
+
+/// 갱신과 로그아웃에 사용하는 세션입니다. 원본 갱신 토큰은 저장하지 않습니다.
+/// 만료·폐기 검사와 갱신 충돌 처리는 비즈니스 계층의 책임입니다.
+/// 과거 DB 복원 후 기존 세션을 무효화합니다. 콘텐츠 복구로 세션을 재활성화하지 않습니다.
+/// @namespace 계정
+model auth_sessions {
+  /// 행의 UUID 식별자입니다.
+  id                 String    @id(map: "pk_auth_sessions") @default(uuid()) @db.Uuid
+  /// 관련 사용자의 논리 참조 식별자입니다.
+  user_id            String    @db.Uuid
+  /// 갱신 토큰의 해시입니다. 원본 토큰은 저장하지 않습니다.
+  refresh_token_hash String    @unique(map: "ux_auth_sessions_refresh_token_hash") @db.VarChar(128)
+  /// 불투명 접근 토큰의 해시입니다. 매 요청에서 현재 세션 상태를 확인합니다.
+  access_token_hash  String    @unique(map: "ux_auth_sessions_access_token_hash") @db.VarChar(128)
+  /// 접근 토큰의 만료 시각입니다. 갱신 세션의 만료와 구분합니다.
+  access_expires_at  DateTime  @db.Timestamptz(3)
+  /// 세션의 만료 시각입니다.
+  expires_at         DateTime  @db.Timestamptz(3)
+  /// 세션을 폐기한 시각입니다.
+  revoked_at         DateTime? @db.Timestamptz(3)
+  /// 행을 생성한 시각입니다.
+  created_at         DateTime  @default(now()) @db.Timestamptz(3)
+  /// 서버가 확인한 생성 주체의 식별자입니다.
+  created_by         String    @db.Uuid
+  /// 행을 최근 변경한 시각입니다.
+  updated_at         DateTime  @default(now()) @updatedAt @db.Timestamptz(3)
+  /// 서버가 확인한 최근 변경 주체의 식별자입니다.
+  updated_by         String    @db.Uuid
+  /// 논리삭제 시각입니다. 삭제되지 않았으면 NULL입니다.
+  deleted_at         DateTime? @db.Timestamptz(3)
+
+  user users @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@index([user_id, expires_at], map: "ix_auth_sessions_user_expiry")
+  @@schema("accounts")
+}
+
+/// 한국어 정책 문서입니다. 효력 시작 시각이 지난 최신 버전을 선택합니다.
+/// 동의가 참조하는 버전의 본문은 수정하지 않습니다.
+/// 정책 변경은 새 버전을 생성합니다. 공통 감사 컬럼은 본문 변경 허용을 뜻하지 않습니다.
+/// @namespace 계정
+model policy_documents {
+  /// 행의 UUID 식별자입니다.
+  id                 String    @id(map: "pk_policy_documents") @default(uuid()) @db.Uuid
+  /// 정책 문서 종류의 ASCII 코드입니다.
+  code               String    @db.VarChar(64)
+  /// 동의 대상 문서의 버전 코드입니다.
+  version            String    @db.VarChar(64)
+  /// 문서 제목입니다.
+  title              String    @db.VarChar(255)
+  /// 콘텐츠 본문입니다.
+  body               String    @db.Text
+  /// 초기 정책 문서의 언어 코드입니다.
+  language           String    @default("ko") @db.VarChar(8)
+  /// 이 버전의 효력이 시작하는 시각입니다.
+  effective_at       DateTime  @db.Timestamptz(3)
+  /// 새 버전의 업무 변경 전에 사용자 재동의를 요구하는지 표시합니다.
+  requires_reconsent Boolean   @default(true)
+  /// 행을 생성한 시각입니다.
+  created_at         DateTime  @default(now()) @db.Timestamptz(3)
+  /// 서버가 확인한 생성 주체의 식별자입니다.
+  created_by         String    @db.Uuid
+  /// 행을 최근 변경한 시각입니다.
+  updated_at         DateTime  @default(now()) @updatedAt @db.Timestamptz(3)
+  /// 서버가 확인한 최근 변경 주체의 식별자입니다.
+  updated_by         String    @db.Uuid
+  /// 논리삭제 시각입니다. 삭제되지 않았으면 NULL입니다.
+  deleted_at         DateTime? @db.Timestamptz(3)
+
+  consents policy_consents[]
+
+  @@unique([code, version], map: "ux_policy_documents_code_version")
+  @@unique([code, effective_at], map: "ux_policy_documents_code_effective")
+  @@schema("accounts")
+}
+
+/// 사용자가 동의한 정책 버전과 시각입니다. 버전은 정책 문서를 통해 식별합니다.
+/// @namespace 계정
+model policy_consents {
+  /// 행의 UUID 식별자입니다.
+  id                 String    @id(map: "pk_policy_consents") @default(uuid()) @db.Uuid
+  /// 관련 사용자의 논리 참조 식별자입니다.
+  user_id            String    @db.Uuid
+  /// 동의한 정책 버전의 논리 참조 식별자입니다.
+  policy_document_id String    @db.Uuid
+  /// 사용자가 정책에 동의한 시각입니다.
+  agreed_at          DateTime  @db.Timestamptz(3)
+  /// 행을 생성한 시각입니다.
+  created_at         DateTime  @default(now()) @db.Timestamptz(3)
+  /// 서버가 확인한 생성 주체의 식별자입니다.
+  created_by         String    @db.Uuid
+  /// 행을 최근 변경한 시각입니다.
+  updated_at         DateTime  @default(now()) @updatedAt @db.Timestamptz(3)
+  /// 서버가 확인한 최근 변경 주체의 식별자입니다.
+  updated_by         String    @db.Uuid
+  /// 논리삭제 시각입니다. 삭제되지 않았으면 NULL입니다.
+  deleted_at         DateTime? @db.Timestamptz(3)
+
+  user     users            @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  document policy_documents @relation(fields: [policy_document_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([user_id, policy_document_id], map: "ux_policy_consents_user_document")
+  @@index([user_id, agreed_at], map: "ix_policy_consents_user_time")
+  @@index([policy_document_id], map: "ix_policy_consents_document")
+  @@schema("accounts")
+}
+
+/// 방향이 있는 친구 요청입니다. 처리한 요청은 새 요청과 구분해 보존할 수 있습니다.
+/// 양방향 대기 요청의 중복은 design-constraints.sql의 부분 고유 인덱스로 제한합니다.
+/// 반대 방향의 대기 요청이 있으면 요청 처리와 친구 생성을 함께 수행합니다.
+/// @namespace 친구와차단
+model friend_requests {
+  /// 행의 UUID 식별자입니다.
+  id           String                  @id(map: "pk_friend_requests") @default(uuid()) @db.Uuid
+  /// 요청 또는 초대를 보낸 사용자의 식별자입니다.
+  sender_id    String                  @db.Uuid
+  /// 요청 또는 초대를 받은 사용자의 식별자입니다.
+  recipient_id String                  @db.Uuid
+  /// 해당 행의 업무 처리 상태입니다.
+  status       e_friend_request_status @default(pending)
+  /// 요청 또는 초대를 처리한 시각입니다.
+  responded_at DateTime?               @db.Timestamptz(3)
+  /// 행을 생성한 시각입니다.
+  created_at   DateTime                @default(now()) @db.Timestamptz(3)
+  /// 서버가 확인한 생성 주체의 식별자입니다.
+  created_by   String                  @db.Uuid
+  /// 행을 최근 변경한 시각입니다.
+  updated_at   DateTime                @default(now()) @updatedAt @db.Timestamptz(3)
+  /// 서버가 확인한 최근 변경 주체의 식별자입니다.
+  updated_by   String                  @db.Uuid
+  /// 논리삭제 시각입니다. 삭제되지 않았으면 NULL입니다.
+  deleted_at   DateTime?               @db.Timestamptz(3)
+
+  sender    users @relation("friend_request_sender", fields: [sender_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  recipient users @relation("friend_request_recipient", fields: [recipient_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@index([sender_id, recipient_id, status], map: "ix_friend_requests_pair_status")
+  @@index([recipient_id, status, created_at], map: "ix_friend_requests_inbox")
+  @@schema("social")
+}
+
+/// 상호 친구 관계입니다. 작은 사용자 ID와 큰 사용자 ID의 순서로 저장합니다.
+/// 자기 자신과의 관계와 역순 입력은 비즈니스 계층에서 거부합니다.
+/// 해제 후 재연결할 때 같은 관계 행을 재사용하는 것은 설계 제안입니다.
+/// @namespace 친구와차단
+model friendships {
+  /// 행의 UUID 식별자입니다.
+  id           String    @id(map: "pk_friendships") @default(uuid()) @db.Uuid
+  /// 정렬한 사용자 쌍에서 작은 식별자입니다.
+  user_low_id  String    @db.Uuid
+  /// 정렬한 사용자 쌍에서 큰 식별자입니다.
+  user_high_id String    @db.Uuid
+  /// 행을 생성한 시각입니다.
+  created_at   DateTime  @default(now()) @db.Timestamptz(3)
+  /// 서버가 확인한 생성 주체의 식별자입니다.
+  created_by   String    @db.Uuid
+  /// 행을 최근 변경한 시각입니다.
+  updated_at   DateTime  @default(now()) @updatedAt @db.Timestamptz(3)
+  /// 서버가 확인한 최근 변경 주체의 식별자입니다.
+  updated_by   String    @db.Uuid
+  /// 논리삭제 시각입니다. 삭제되지 않았으면 NULL입니다.
+  deleted_at   DateTime? @db.Timestamptz(3)
+
+  user_low  users @relation("friendship_low", fields: [user_low_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  user_high users @relation("friendship_high", fields: [user_high_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([user_low_id, user_high_id], map: "ux_friendships_pair")
+  @@index([user_high_id, deleted_at], map: "ix_friendships_high_active")
+  @@schema("social")
+}
+
+/// 차단한 방향을 저장합니다. 노출 제한은 양쪽 방향을 검사합니다.
+/// 차단 해제 시 반대 방향의 차단까지 해제하지 않습니다.
+/// 기존 공동 프로젝트 멤버십은 삭제하지 않습니다.
+/// 콘텐츠 복구는 차단 상태를 변경하지 않습니다.
+/// @namespace 친구와차단
+model user_blocks {
+  /// 행의 UUID 식별자입니다.
+  id         String    @id(map: "pk_user_blocks") @default(uuid()) @db.Uuid
+  /// 차단을 실행한 사용자의 식별자입니다.
+  blocker_id String    @db.Uuid
+  /// 차단 대상 사용자의 식별자입니다.
+  blocked_id String    @db.Uuid
+  /// 행을 생성한 시각입니다.
+  created_at DateTime  @default(now()) @db.Timestamptz(3)
+  /// 서버가 확인한 생성 주체의 식별자입니다.
+  created_by String    @db.Uuid
+  /// 행을 최근 변경한 시각입니다.
+  updated_at DateTime  @default(now()) @updatedAt @db.Timestamptz(3)
+  /// 서버가 확인한 최근 변경 주체의 식별자입니다.
+  updated_by String    @db.Uuid
+  /// 논리삭제 시각입니다. 삭제되지 않았으면 NULL입니다.
+  deleted_at DateTime? @db.Timestamptz(3)
+
+  blocker users @relation("block_actor", fields: [blocker_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  blocked users @relation("block_target", fields: [blocked_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([blocker_id, blocked_id], map: "ux_user_blocks_pair")
+  @@index([blocked_id, deleted_at], map: "ix_user_blocks_target_active")
+  @@schema("social")
+}
+
+/// 비공개 공유 작업 공간입니다. 방장 정보의 기준은 owner_user_id 하나입니다.
+/// 비즈니스 계층은 방장이 유효한 멤버인지 검사합니다.
+/// 개인 이관 프로젝트도 같은 모델을 사용합니다.
+/// @namespace 프로젝트
+model projects {
+  /// 행의 UUID 식별자입니다.
+  id                    String    @id(map: "pk_projects") @default(uuid()) @db.Uuid
+  /// 현재 방장의 사용자 식별자입니다.
+  owner_user_id         String    @db.Uuid
+  /// 프로젝트 또는 카운터의 표시 이름입니다.
+  name                  String    @db.VarChar(255)
+  /// 프로젝트 대표 사진의 저장 객체 식별자입니다. 이관 프로젝트도 같은 객체를 참조할 수 있습니다.
+  cover_photo_object_id String?   @db.Uuid
+  /// 마지막 참여자가 나가 프로젝트를 종료한 시각입니다. 신규 참여와 쓰기를 금지합니다.
+  terminated_at         DateTime? @db.Timestamptz(3)
+  /// 행을 생성한 시각입니다.
+  created_at            DateTime  @default(now()) @db.Timestamptz(3)
+  /// 서버가 확인한 생성 주체의 식별자입니다.
+  created_by            String    @db.Uuid
+  /// 행을 최근 변경한 시각입니다.
+  updated_at            DateTime  @default(now()) @updatedAt @db.Timestamptz(3)
+  /// 서버가 확인한 최근 변경 주체의 식별자입니다.
+  updated_by            String    @db.Uuid
+  /// 논리삭제 시각입니다. 삭제되지 않았으면 NULL입니다.
+  deleted_at            DateTime? @db.Timestamptz(3)
+  /// 이 행을 직접 삭제한 작업의 UUID입니다. 복구 시 삭제 시각과 함께 제거합니다.
+  deletion_operation_id String?   @db.Uuid
+
+  owner          users                 @relation(fields: [owner_user_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  memberships    project_memberships[]
+  workspaces     project_workspaces[]
+  invitations    project_invitations[]
+  cover_photo    stored_objects?       @relation("cover_photo", fields: [cover_photo_object_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  transfers_from workspace_transfers[] @relation("transfer_source_project")
+  transfers_to   workspace_transfers[] @relation("transfer_destination_project")
+
+  @@index([owner_user_id, deleted_at], map: "ix_projects_owner_active")
+  @@index([cover_photo_object_id], map: "ix_projects_cover_photo")
+  @@index([deletion_operation_id], map: "ix_projects_deletion_operation")
+  @@schema("projects")
+}
+
+/// 사용자의 프로젝트 참여 기간입니다. 개인 작업 데이터는 소유하지 않습니다.
+/// 참여 종료는 left_at을 기록합니다. 재가입은 새 행을 생성합니다.
+/// 유효한 참여는 left_at과 deleted_at이 모두 NULL인 행입니다.
+/// 같은 프로젝트와 사용자의 유효한 참여는 부분 고유 인덱스로 하나만 허용합니다.
+/// @namespace 프로젝트
+model project_memberships {
+  /// 행의 UUID 식별자입니다.
+  id         String    @id(map: "pk_project_memberships") @default(uuid()) @db.Uuid
+  /// 참여하거나 초대한 프로젝트의 논리 참조 식별자입니다.
+  project_id String    @db.Uuid
+  /// 관련 사용자의 논리 참조 식별자입니다.
+  user_id    String    @db.Uuid
+  /// 참여를 종료한 시각입니다. 작업 완료나 콘텐츠 삭제와 구분합니다.
+  left_at    DateTime? @db.Timestamptz(3)
+  /// 행을 생성한 시각입니다.
+  created_at DateTime  @default(now()) @db.Timestamptz(3)
+  /// 서버가 확인한 생성 주체의 식별자입니다.
+  created_by String    @db.Uuid
+  /// 행을 최근 변경한 시각입니다.
+  updated_at DateTime  @default(now()) @updatedAt @db.Timestamptz(3)
+  /// 서버가 확인한 최근 변경 주체의 식별자입니다.
+  updated_by String    @db.Uuid
+  /// 논리삭제 시각입니다. 삭제되지 않았으면 NULL입니다.
+  deleted_at DateTime? @db.Timestamptz(3)
+
+  project        projects              @relation(fields: [project_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  user           users                 @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  transfers_from workspace_transfers[] @relation("transfer_source_membership")
+  transfers_to   workspace_transfers[] @relation("transfer_destination_membership")
+
+  @@index([project_id, user_id], map: "ix_project_memberships_project_user")
+  @@index([user_id, left_at, created_at], map: "ix_project_memberships_user_period")
+  @@schema("projects")
+}
+
+/// 사용자가 소유한 개인 작업 공간입니다. 참여 권한은 멤버십으로 판정합니다.
+/// 작업 상태와 실·바늘 메모는 이 행에 귀속됩니다.
+/// 이관은 project_id를 변경합니다. 하위 데이터와 원 작성자의 식별자는 유지합니다.
+/// 모든 하위 데이터 변경은 이 행을 잠그고 version을 증가시킵니다.
+/// @namespace 프로젝트
+/// @erd 기록
+model project_workspaces {
+  /// 행의 UUID 식별자입니다. 이관 후에도 유지합니다.
+  id                    String             @id(map: "pk_project_workspaces") @default(uuid()) @db.Uuid
+  /// 현재 작업 공간이 속한 프로젝트의 식별자입니다.
+  project_id            String             @db.Uuid
+  /// 개인 작업 공간을 소유한 사용자의 식별자입니다.
+  owner_user_id         String             @db.Uuid
+  /// 개인 작업의 상태입니다. 참여 종료 상태가 아닙니다.
+  status                e_workspace_status @default(active)
+  /// 사용자가 사용하는 실의 텍스트 메모입니다. 초기 버전은 구조화하지 않습니다.
+  yarn_notes            String?            @db.Text
+  /// 사용자가 사용하는 바늘의 텍스트 메모입니다. 초기 버전은 구조화하지 않습니다.
+  needle_notes          String?            @db.Text
+  /// done 상태로 변경한 시각입니다. 다른 상태에서는 NULL입니다.
+  ended_at              DateTime?          @db.Timestamptz(3)
+  /// 이관과 하위 데이터 변경을 포함한 작업 공간의 변경 번호입니다.
+  version               Int                @default(0)
+  /// 행을 생성한 시각입니다.
+  created_at            DateTime           @default(now()) @db.Timestamptz(3)
+  /// 서버가 확인한 생성 주체의 식별자입니다.
+  created_by            String             @db.Uuid
+  /// 행을 최근 변경한 시각입니다.
+  updated_at            DateTime           @default(now()) @updatedAt @db.Timestamptz(3)
+  /// 서버가 확인한 최근 변경 주체의 식별자입니다.
+  updated_by            String             @db.Uuid
+  /// 이 작업 공간을 직접 삭제한 시각입니다. 프로젝트 삭제로 변경하지 않습니다.
+  deleted_at            DateTime?          @db.Timestamptz(3)
+  /// 이 행을 직접 삭제한 작업의 UUID입니다. 복구 시 삭제 시각과 함께 제거합니다.
+  deletion_operation_id String?            @db.Uuid
+
+  project   projects              @relation(fields: [project_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  owner     users                 @relation(fields: [owner_user_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  counters  project_counters[]
+  records   project_records[]
+  timers    project_timers[]
+  transfers workspace_transfers[]
+
+  @@unique([project_id, owner_user_id], map: "ux_project_workspaces_project_owner")
+  @@index([owner_user_id, status, created_at], map: "ix_project_workspaces_owner_status")
+  @@index([deletion_operation_id], map: "ix_project_workspaces_deletion_operation")
+  @@schema("projects")
+}
+
+/// 완료된 이관의 변경 전후 관계를 보존합니다. 생성 후 업무 필드를 변경하지 않습니다.
+/// id는 이관 작업 식별자입니다. 재시도는 같은 id와 같은 입력을 사용합니다.
+/// 생성 시각과 생성 주체는 이관 완료 시각과 처리 주체입니다.
+/// 역이관은 새 이관 행을 생성합니다. 기존 이력을 덮어쓰지 않습니다.
+/// @namespace 프로젝트
+model workspace_transfers {
+  /// 이관 작업의 UUID입니다. 중복 처리와 요청 내용의 일치를 확인합니다.
+  id                 String    @id(map: "pk_workspace_transfers") @db.Uuid
+  /// 이동한 개인 작업 공간의 식별자입니다.
+  workspace_id       String    @db.Uuid
+  /// 이관 전 프로젝트의 식별자입니다.
+  from_project_id    String    @db.Uuid
+  /// 이관 후 프로젝트의 식별자입니다.
+  to_project_id      String    @db.Uuid
+  /// 이관에서 종료한 참여 기간의 식별자입니다.
+  from_membership_id String    @db.Uuid
+  /// 이관에서 생성한 참여 기간의 식별자입니다.
+  to_membership_id   String    @db.Uuid
+  /// 이관 완료 직후 작업 공간의 변경 번호입니다. 역이관은 현재 번호와 비교합니다.
+  workspace_version  Int
+  /// 이관을 완료한 시각입니다.
+  created_at         DateTime  @default(now()) @db.Timestamptz(3)
+  /// 서버가 확인한 이관 처리 주체의 식별자입니다.
+  created_by         String    @db.Uuid
+  /// 생성 시각과 같은 값입니다. 이력의 업무 필드는 변경하지 않습니다.
+  updated_at         DateTime  @default(now()) @db.Timestamptz(3)
+  /// 생성 주체와 같은 값입니다. 이력의 업무 필드는 변경하지 않습니다.
+  updated_by         String    @db.Uuid
+  /// 보존 정책의 별도 승인 전까지 NULL을 유지합니다. 콘텐츠 복구 대상이 아닙니다.
+  deleted_at         DateTime? @db.Timestamptz(3)
+
+  workspace       project_workspaces  @relation(fields: [workspace_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  from_project    projects            @relation("transfer_source_project", fields: [from_project_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  to_project      projects            @relation("transfer_destination_project", fields: [to_project_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  from_membership project_memberships @relation("transfer_source_membership", fields: [from_membership_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  to_membership   project_memberships @relation("transfer_destination_membership", fields: [to_membership_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([workspace_id, workspace_version], map: "ux_workspace_transfers_workspace_version")
+  @@index([from_project_id], map: "ix_workspace_transfers_from_project")
+  @@index([to_project_id], map: "ix_workspace_transfers_to_project")
+  @@index([from_membership_id], map: "ix_workspace_transfers_from_membership")
+  @@index([to_membership_id], map: "ix_workspace_transfers_to_membership")
+  @@schema("projects")
+}
+
+/// 친구에게 보낸 프로젝트 초대입니다.
+/// 비즈니스 계층은 중복 대기 초대, 친구 관계와 차단을 검사합니다.
+/// 수락 처리와 멤버십·작업 공간·기본 카운터 생성은 하나의 트랜잭션으로 처리합니다.
+/// 중복 대기 초대는 design-constraints.sql의 부분 고유 인덱스로 제한합니다.
+/// @namespace 프로젝트
+model project_invitations {
+  /// 행의 UUID 식별자입니다.
+  id           String              @id(map: "pk_project_invitations") @default(uuid()) @db.Uuid
+  /// 참여하거나 초대한 프로젝트의 논리 참조 식별자입니다.
+  project_id   String              @db.Uuid
+  /// 요청 또는 초대를 보낸 사용자의 식별자입니다.
+  sender_id    String              @db.Uuid
+  /// 요청 또는 초대를 받은 사용자의 식별자입니다.
+  recipient_id String              @db.Uuid
+  /// 해당 행의 업무 처리 상태입니다.
+  status       e_invitation_status @default(pending)
+  /// 요청 또는 초대를 처리한 시각입니다.
+  responded_at DateTime?           @db.Timestamptz(3)
+  /// 행을 생성한 시각입니다.
+  created_at   DateTime            @default(now()) @db.Timestamptz(3)
+  /// 서버가 확인한 생성 주체의 식별자입니다.
+  created_by   String              @db.Uuid
+  /// 행을 최근 변경한 시각입니다.
+  updated_at   DateTime            @default(now()) @updatedAt @db.Timestamptz(3)
+  /// 서버가 확인한 최근 변경 주체의 식별자입니다.
+  updated_by   String              @db.Uuid
+  /// 논리삭제 시각입니다. 삭제되지 않았으면 NULL입니다.
+  deleted_at   DateTime?           @db.Timestamptz(3)
+
+  project   projects @relation(fields: [project_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  sender    users    @relation("invitation_sender", fields: [sender_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  recipient users    @relation("invitation_recipient", fields: [recipient_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@index([project_id, recipient_id, status], map: "ix_project_invitations_target")
+  @@index([recipient_id, status, created_at], map: "ix_project_invitations_inbox")
+  @@index([sender_id, status], map: "ix_project_invitations_sender")
+  @@schema("projects")
+}
+
+/// 멤버 개인의 카운터입니다. 가입 시 기본 카운터 두 개를 생성합니다.
+/// 값은 음수가 될 수 없습니다. 목표 초과는 허용합니다.
+/// 추가·삭제·표시 여부·순서를 지원합니다. 변경 명령의 재시도는 작업 식별자를 유지합니다.
+/// @namespace 프로젝트
+model project_counters {
+  /// 행의 UUID 식별자입니다.
+  id                    String    @id(map: "pk_project_counters") @default(uuid()) @db.Uuid
+  /// 개인 작업 데이터를 소유한 작업 공간의 식별자입니다.
+  workspace_id          String    @db.Uuid
+  /// 프로젝트 또는 카운터의 표시 이름입니다.
+  name                  String    @db.VarChar(100)
+  /// 현재 카운터 값입니다. 비즈니스 계층은 음수를 거부합니다.
+  value                 Int       @default(0)
+  /// 선택한 목표 값입니다. 현재 값의 목표 초과는 허용합니다.
+  target_value          Int?
+  /// 화면에 표시할지 지정합니다. 숨겨도 현재 값은 유지합니다.
+  is_visible            Boolean   @default(true)
+  /// 같은 작업 공간 안의 표시 순서입니다. 서버가 기대 version을 확인해 변경합니다.
+  sort_order            Int       @default(0)
+  /// 설정·초기화·순서 변경의 낙관적 충돌 검사용 변경 번호입니다.
+  version               Int       @default(0)
+  /// 행을 생성한 시각입니다.
+  created_at            DateTime  @default(now()) @db.Timestamptz(3)
+  /// 서버가 확인한 생성 주체의 식별자입니다.
+  created_by            String    @db.Uuid
+  /// 행을 최근 변경한 시각입니다.
+  updated_at            DateTime  @default(now()) @updatedAt @db.Timestamptz(3)
+  /// 서버가 확인한 최근 변경 주체의 식별자입니다.
+  updated_by            String    @db.Uuid
+  /// 논리삭제 시각입니다. 삭제되지 않았으면 NULL입니다.
+  deleted_at            DateTime? @db.Timestamptz(3)
+  /// 이 행을 직접 삭제한 작업의 UUID입니다. 복구 시 삭제 시각과 함께 제거합니다.
+  deletion_operation_id String?   @db.Uuid
+
+  workspace project_workspaces @relation(fields: [workspace_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@index([workspace_id, deleted_at], map: "ix_project_counters_workspace_active")
+  @@index([deletion_operation_id], map: "ix_project_counters_deletion_operation")
+  @@schema("projects")
+}
+
+/// 완료된 시간 기록 또는 직접 입력한 기록입니다. 진행 중 타이머 상태가 아닙니다.
+/// 프로젝트는 작업 공간을 통해 조회합니다. 프로젝트 ID를 중복 저장하지 않습니다.
+/// 이관 시 작성자, 댓글과 반응의 식별자를 유지합니다.
+/// @namespace 기록
+model project_records {
+  /// 행의 UUID 식별자입니다.
+  id                    String          @id(map: "pk_project_records") @default(uuid()) @db.Uuid
+  /// 개인 작업 데이터를 소유한 작업 공간의 식별자입니다.
+  workspace_id          String          @db.Uuid
+  /// 콘텐츠를 작성한 사용자의 식별자입니다.
+  author_id             String          @db.Uuid
+  /// 작업 시간의 입력 경로입니다.
+  source                e_record_source
+  /// 콘텐츠 본문입니다.
+  body                  String?         @db.Text
+  /// 작업 시간의 저장 단위는 초로 제안합니다. 음수는 거부합니다.
+  duration_seconds      Int
+  /// 작업 기록의 기준 시각입니다.
+  recorded_at           DateTime        @db.Timestamptz(3)
+  /// 행을 생성한 시각입니다.
+  created_at            DateTime        @default(now()) @db.Timestamptz(3)
+  /// 서버가 확인한 생성 주체의 식별자입니다.
+  created_by            String          @db.Uuid
+  /// 행을 최근 변경한 시각입니다.
+  updated_at            DateTime        @default(now()) @updatedAt @db.Timestamptz(3)
+  /// 서버가 확인한 최근 변경 주체의 식별자입니다.
+  updated_by            String          @db.Uuid
+  /// 논리삭제 시각입니다. 삭제되지 않았으면 NULL입니다.
+  deleted_at            DateTime?       @db.Timestamptz(3)
+  /// 이 행을 직접 삭제한 작업의 UUID입니다. 복구 시 삭제 시각과 함께 제거합니다.
+  deletion_operation_id String?         @db.Uuid
+
+  workspace project_workspaces @relation(fields: [workspace_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  author    users              @relation(fields: [author_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  comments  record_comments[]
+  reactions record_reactions[]
+  timer     project_timers?
+
+  @@index([workspace_id, recorded_at, id], map: "ix_project_records_workspace_time")
+  @@index([author_id, recorded_at, id], map: "ix_project_records_author_time")
+  @@index([deletion_operation_id], map: "ix_project_records_deletion_operation")
+  @@schema("projects")
+}
+
+/// 프로젝트 기록의 댓글입니다. 기록 작성자와 댓글 작성자를 구분합니다.
+/// 이관 뒤에도 원 댓글과 작성자를 보존합니다. 현재 귀속 프로젝트의 참여와 차단을 검사합니다.
+/// @namespace 기록
+model record_comments {
+  /// 행의 UUID 식별자입니다.
+  id                    String    @id(map: "pk_record_comments") @default(uuid()) @db.Uuid
+  /// 댓글 또는 반응이 속한 작업 기록의 식별자입니다.
+  record_id             String    @db.Uuid
+  /// 콘텐츠를 작성한 사용자의 식별자입니다.
+  author_id             String    @db.Uuid
+  /// 콘텐츠 본문입니다.
+  body                  String    @db.Text
+  /// 행을 생성한 시각입니다.
+  created_at            DateTime  @default(now()) @db.Timestamptz(3)
+  /// 서버가 확인한 생성 주체의 식별자입니다.
+  created_by            String    @db.Uuid
+  /// 행을 최근 변경한 시각입니다.
+  updated_at            DateTime  @default(now()) @updatedAt @db.Timestamptz(3)
+  /// 서버가 확인한 최근 변경 주체의 식별자입니다.
+  updated_by            String    @db.Uuid
+  /// 논리삭제 시각입니다. 삭제되지 않았으면 NULL입니다.
+  deleted_at            DateTime? @db.Timestamptz(3)
+  /// 이 행을 직접 삭제한 작업의 UUID입니다. 부모 삭제로 변경하지 않습니다.
+  deletion_operation_id String?   @db.Uuid
+
+  record project_records @relation(fields: [record_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  author users           @relation(fields: [author_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@index([record_id, created_at, id], map: "ix_record_comments_record_time")
+  @@index([author_id], map: "ix_record_comments_author")
+  @@index([deletion_operation_id], map: "ix_record_comments_deletion_operation")
+  @@schema("projects")
+}
+
+/// 기록에 대한 이모지 반응입니다. 코드는 ASCII로 저장합니다.
+/// 등록한 반응 코드만 허용합니다. 같은 사용자의 같은 코드 반응은 하나입니다.
+/// @namespace 기록
+model record_reactions {
+  /// 행의 UUID 식별자입니다.
+  id         String          @id(map: "pk_record_reactions") @default(uuid()) @db.Uuid
+  /// 댓글 또는 반응이 속한 작업 기록의 식별자입니다.
+  record_id  String          @db.Uuid
+  /// 관련 사용자의 논리 참조 식별자입니다.
+  user_id    String          @db.Uuid
+  /// 표시할 이모지의 ASCII 코드입니다.
+  emoji_code e_reaction_code
+  /// 행을 생성한 시각입니다.
+  created_at DateTime        @default(now()) @db.Timestamptz(3)
+  /// 서버가 확인한 생성 주체의 식별자입니다.
+  created_by String          @db.Uuid
+  /// 행을 최근 변경한 시각입니다.
+  updated_at DateTime        @default(now()) @updatedAt @db.Timestamptz(3)
+  /// 서버가 확인한 최근 변경 주체의 식별자입니다.
+  updated_by String          @db.Uuid
+  /// 논리삭제 시각입니다. 삭제되지 않았으면 NULL입니다.
+  deleted_at DateTime?       @db.Timestamptz(3)
+
+  record project_records @relation(fields: [record_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  user   users           @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([record_id, user_id, emoji_code], map: "ux_record_reactions_record_user_emoji")
+  @@index([user_id], map: "ix_record_reactions_user")
+  @@schema("projects")
+}
+
+/// 피드 게시글입니다. 프로젝트 기록과 별도 콘텐츠입니다.
+/// 프로필 공개 범위와 무관하게 노출합니다. 차단은 별도로 검사합니다.
+/// 초기 버전은 작성과 작성자 삭제를 지원합니다. 게시글 수정은 지원하지 않습니다.
+/// @namespace 커뮤니티
+model posts {
+  /// 행의 UUID 식별자입니다.
+  id                    String    @id(map: "pk_posts") @default(uuid()) @db.Uuid
+  /// 콘텐츠를 작성한 사용자의 식별자입니다.
+  author_id             String    @db.Uuid
+  /// 콘텐츠 본문입니다.
+  body                  String    @db.Text
+  /// 행을 생성한 시각입니다.
+  created_at            DateTime  @default(now()) @db.Timestamptz(3)
+  /// 서버가 확인한 생성 주체의 식별자입니다.
+  created_by            String    @db.Uuid
+  /// 행을 최근 변경한 시각입니다.
+  updated_at            DateTime  @default(now()) @updatedAt @db.Timestamptz(3)
+  /// 서버가 확인한 최근 변경 주체의 식별자입니다.
+  updated_by            String    @db.Uuid
+  /// 논리삭제 시각입니다. 삭제되지 않았으면 NULL입니다.
+  deleted_at            DateTime? @db.Timestamptz(3)
+  /// 이 행을 직접 삭제한 작업의 UUID입니다. 복구 시 삭제 시각과 함께 제거합니다.
+  deletion_operation_id String?   @db.Uuid
+
+  author   users           @relation(fields: [author_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  comments post_comments[]
+  likes    post_likes[]
+  reports  reports[]
+
+  @@index([created_at, id], map: "ix_posts_feed_cursor")
+  @@index([author_id, created_at, id], map: "ix_posts_author_time")
+  @@index([deletion_operation_id], map: "ix_posts_deletion_operation")
+  @@schema("community")
+}
+
+/// 피드 게시글의 댓글입니다. 프로젝트 기록의 댓글과 구분합니다.
+/// @namespace 커뮤니티
+model post_comments {
+  /// 행의 UUID 식별자입니다.
+  id                    String    @id(map: "pk_post_comments") @default(uuid()) @db.Uuid
+  /// 관련 피드 게시글의 논리 참조 식별자입니다.
+  post_id               String    @db.Uuid
+  /// 콘텐츠를 작성한 사용자의 식별자입니다.
+  author_id             String    @db.Uuid
+  /// 콘텐츠 본문입니다.
+  body                  String    @db.Text
+  /// 행을 생성한 시각입니다.
+  created_at            DateTime  @default(now()) @db.Timestamptz(3)
+  /// 서버가 확인한 생성 주체의 식별자입니다.
+  created_by            String    @db.Uuid
+  /// 행을 최근 변경한 시각입니다.
+  updated_at            DateTime  @default(now()) @updatedAt @db.Timestamptz(3)
+  /// 서버가 확인한 최근 변경 주체의 식별자입니다.
+  updated_by            String    @db.Uuid
+  /// 논리삭제 시각입니다. 삭제되지 않았으면 NULL입니다.
+  deleted_at            DateTime? @db.Timestamptz(3)
+  /// 이 행을 직접 삭제한 작업의 UUID입니다. 부모 삭제로 변경하지 않습니다.
+  deletion_operation_id String?   @db.Uuid
+
+  post   posts @relation(fields: [post_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  author users @relation(fields: [author_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@index([post_id, created_at, id], map: "ix_post_comments_post_time")
+  @@index([author_id], map: "ix_post_comments_author")
+  @@index([deletion_operation_id], map: "ix_post_comments_deletion_operation")
+  @@schema("community")
+}
+
+/// 사용자별 게시글 좋아요입니다. 취소는 논리삭제로 표시합니다.
+/// 같은 사용자와 게시글의 행을 재사용하는 것은 설계 제안입니다.
+/// @namespace 커뮤니티
+model post_likes {
+  /// 행의 UUID 식별자입니다.
+  id         String    @id(map: "pk_post_likes") @default(uuid()) @db.Uuid
+  /// 관련 피드 게시글의 논리 참조 식별자입니다.
+  post_id    String    @db.Uuid
+  /// 관련 사용자의 논리 참조 식별자입니다.
+  user_id    String    @db.Uuid
+  /// 행을 생성한 시각입니다.
+  created_at DateTime  @default(now()) @db.Timestamptz(3)
+  /// 서버가 확인한 생성 주체의 식별자입니다.
+  created_by String    @db.Uuid
+  /// 행을 최근 변경한 시각입니다.
+  updated_at DateTime  @default(now()) @updatedAt @db.Timestamptz(3)
+  /// 서버가 확인한 최근 변경 주체의 식별자입니다.
+  updated_by String    @db.Uuid
+  /// 논리삭제 시각입니다. 삭제되지 않았으면 NULL입니다.
+  deleted_at DateTime? @db.Timestamptz(3)
+
+  post posts @relation(fields: [post_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  user users @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([post_id, user_id], map: "ux_post_likes_post_user")
+  @@index([user_id], map: "ix_post_likes_user")
+  @@schema("community")
+}
+
+/// 신고 사유와 접수 당시 텍스트 증거입니다. 자동 제재와 사진 증거 사본은 제외합니다.
+/// 사용자 신고는 target_user_id만 지정합니다. 게시글 신고는 post_id만 지정합니다.
+/// 비즈니스 계층은 정확히 한 대상만 지정했는지 검사합니다.
+/// 신고 대상의 접수 당시 내용을 별도로 보존합니다. 대상 변경은 증거를 변경하지 않습니다.
+/// @namespace 커뮤니티
+model reports {
+  /// 행의 UUID 식별자입니다.
+  id              String          @id(map: "pk_reports") @default(uuid()) @db.Uuid
+  /// 신고를 접수한 사용자의 식별자입니다.
+  reporter_id     String          @db.Uuid
+  /// 사용자 신고 대상의 식별자입니다.
+  target_user_id  String?         @db.Uuid
+  /// 관련 피드 게시글의 논리 참조 식별자입니다.
+  post_id         String?         @db.Uuid
+  /// 신고 사유의 ASCII 코드입니다.
+  reason_code     e_report_reason
+  /// 신고자가 작성한 상세 내용입니다.
+  detail          String?         @db.Text
+  /// 허용한 대상 필드만 보존한 접수 당시 증거입니다. 형식은 설계 문서에서 정의합니다.
+  target_snapshot Json            @db.JsonB
+  /// 접수·검토·종결 상태입니다. 권한을 확인한 운영자만 변경합니다.
+  status          e_report_status @default(received)
+  /// 신고를 종결한 시각입니다. 종결 상태에서만 지정합니다.
+  closed_at       DateTime?       @db.Timestamptz(3)
+  /// 행을 생성한 시각입니다.
+  created_at      DateTime        @default(now()) @db.Timestamptz(3)
+  /// 서버가 확인한 생성 주체의 식별자입니다.
+  created_by      String          @db.Uuid
+  /// 행을 최근 변경한 시각입니다.
+  updated_at      DateTime        @default(now()) @updatedAt @db.Timestamptz(3)
+  /// 서버가 확인한 최근 변경 주체의 식별자입니다.
+  updated_by      String          @db.Uuid
+  /// 논리삭제 시각입니다. 삭제되지 않았으면 NULL입니다.
+  deleted_at      DateTime?       @db.Timestamptz(3)
+
+  reporter    users            @relation("report_actor", fields: [reporter_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  target_user users?           @relation("report_target", fields: [target_user_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  post        posts?           @relation(fields: [post_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  actions     report_actions[]
+
+  @@index([reporter_id, created_at], map: "ix_reports_reporter_time")
+  @@index([target_user_id, created_at], map: "ix_reports_target_time")
+  @@index([post_id, created_at], map: "ix_reports_post_time")
+  @@index([status, created_at, id], map: "ix_reports_status_time")
+  @@schema("community")
+}
+
+/// 서비스가 관리하는 파일의 안정적인 저장 참조입니다. URL은 저장하지 않습니다.
+/// 같은 객체를 여러 프로젝트가 참조할 수 있습니다. 삭제 전 모든 참조와 보존 기간을 검사합니다.
+/// 삭제된 콘텐츠의 복구 기간에도 파일을 보존합니다. 객체 키의 재사용과 바이트 덮어쓰기는 금지합니다.
+/// @namespace 파일
+/// @erd 계정
+/// @erd 프로젝트
+model stored_objects {
+  /// 파일 참조의 UUID입니다. 표시 URL이 바뀌어도 유지합니다.
+  id            String    @id(map: "pk_stored_objects") @default(uuid()) @db.Uuid
+  /// 파일을 최초 등록한 소유자의 식별자입니다. 감사 주체와 구분합니다.
+  owner_user_id String    @db.Uuid
+  /// 승인된 저장 위치의 ASCII 코드입니다. 인증 정보와 임시 URL을 저장하지 않습니다.
+  storage_code  String    @db.VarChar(64)
+  /// 저장 위치 안의 ASCII 객체 키입니다. 다른 파일에 재사용하지 않습니다.
+  object_key    String    @db.VarChar(512)
+  /// 원본 바이트의 소문자 SHA-256 값입니다. 파일 복원 결과와 비교합니다.
+  sha256        String    @db.Char(64)
+  /// 원본 파일의 바이트 수입니다. 음수를 허용하지 않습니다.
+  byte_size     BigInt
+  /// 저장 객체의 존재를 확인하고 이 행을 생성한 시각입니다.
+  created_at    DateTime  @default(now()) @db.Timestamptz(3)
+  /// 서버가 확인한 생성 주체의 식별자입니다.
+  created_by    String    @db.Uuid
+  /// 행을 최근 변경한 시각입니다.
+  updated_at    DateTime  @default(now()) @updatedAt @db.Timestamptz(3)
+  /// 서버가 확인한 최근 변경 주체의 식별자입니다.
+  updated_by    String    @db.Uuid
+  /// 신규 참조를 금지한 시각입니다. 실제 파일 제거 완료를 뜻하지 않습니다.
+  deleted_at    DateTime? @db.Timestamptz(3)
+  /// 실제 파일 제거를 확인한 시각입니다. 제거 실패 시 NULL을 유지합니다.
+  purged_at     DateTime? @db.Timestamptz(3)
+
+  profiles       users[]    @relation("profile_photo")
+  project_covers projects[] @relation("cover_photo")
+  owner          users      @relation("stored_object_owner", fields: [owner_user_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([storage_code, object_key], map: "ux_stored_objects_storage_key")
+  @@index([owner_user_id], map: "ix_stored_objects_owner")
+  @@schema("accounts")
+}
+
+/// 과거 로그인 ID와 handle의 영구 예약입니다. 같은 계정의 handle 복귀만 허용합니다.
+/// 탈퇴 뒤에도 예약과 원래 사용자 식별자를 보존합니다. 이 행의 논리삭제로 재발급하지 않습니다.
+/// @namespace 계정
+model user_identifiers {
+  /// 예약 행의 UUID 식별자입니다.
+  id         String            @id(map: "pk_user_identifiers") @default(uuid()) @db.Uuid
+  /// 이 값을 처음 사용한 사용자 식별자입니다.
+  user_id    String            @db.Uuid
+  /// 로그인 ID 또는 handle 예약인지 구분합니다.
+  kind       e_identifier_kind
+  /// 공백 제거와 영문 소문자 정규화를 완료한 식별자입니다.
+  value      String            @db.VarChar(32)
+  /// 예약을 생성한 시각입니다.
+  created_at DateTime          @default(now()) @db.Timestamptz(3)
+  /// 서버가 확인한 생성 주체입니다.
+  created_by String            @db.Uuid
+  /// 예약 메타데이터를 최근 변경한 시각입니다.
+  updated_at DateTime          @default(now()) @updatedAt @db.Timestamptz(3)
+  /// 서버가 확인한 최근 변경 주체입니다.
+  updated_by String            @db.Uuid
+  /// 예약의 보존 표시입니다. 값의 고유성에는 영향을 주지 않습니다.
+  deleted_at DateTime?         @db.Timestamptz(3)
+
+  user users @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([kind, value], map: "ux_user_identifiers_kind_value")
+  @@index([user_id, kind], map: "ix_user_identifiers_user_kind")
+  @@schema("accounts")
+}
+
+/// 일회용 계정 복구 코드입니다. 원문은 발급 응답에서 한 번 제공하며 저장하지 않습니다.
+/// 사용과 재발급은 사용자 잠금 아래에서 이전 코드를 무효화합니다.
+/// @namespace 계정
+model recovery_codes {
+  /// 코드 발급 행의 UUID 식별자입니다.
+  id         String    @id(map: "pk_recovery_codes") @default(uuid()) @db.Uuid
+  /// 복구 대상 사용자 식별자입니다.
+  user_id    String    @db.Uuid
+  /// 복구 코드 검증용 해시입니다. 원문은 저장하지 않습니다.
+  code_hash  String    @unique(map: "ux_recovery_codes_hash") @db.VarChar(128)
+  /// 코드를 사용한 시각입니다. 사용한 코드는 다시 사용하지 않습니다.
+  used_at    DateTime? @db.Timestamptz(3)
+  /// 재발급 또는 탈퇴로 무효화한 시각입니다.
+  revoked_at DateTime? @db.Timestamptz(3)
+  /// 발급 행을 생성한 시각입니다.
+  created_at DateTime  @default(now()) @db.Timestamptz(3)
+  /// 서버가 확인한 생성 주체입니다.
+  created_by String    @db.Uuid
+  /// 행을 최근 변경한 시각입니다.
+  updated_at DateTime  @default(now()) @updatedAt @db.Timestamptz(3)
+  /// 서버가 확인한 최근 변경 주체입니다.
+  updated_by String    @db.Uuid
+  /// 논리삭제 시각입니다. 삭제된 코드는 유효하지 않습니다.
+  deleted_at DateTime? @db.Timestamptz(3)
+
+  user users @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@index([user_id, used_at, revoked_at], map: "ix_recovery_codes_user_state")
+  @@schema("accounts")
+}
+
+/// 사용자 로그인 계정과 분리한 시스템 감사 주체입니다. 작업 종류마다 고정 UUID를 등록합니다.
+/// 감사 컬럼의 값은 서버가 선택합니다. 클라이언트가 주체를 지정하지 않습니다.
+/// @namespace 계정
+model system_principals {
+  /// 승인한 작업 종류의 고정 UUID입니다. 자동 생성하지 않습니다.
+  id         String    @id(map: "pk_system_principals") @db.Uuid
+  /// 시스템 작업 종류의 ASCII 코드입니다.
+  code       String    @unique(map: "ux_system_principals_code") @db.VarChar(64)
+  /// 등록한 시각입니다.
+  created_at DateTime  @default(now()) @db.Timestamptz(3)
+  /// 서버가 확인한 등록 주체입니다.
+  created_by String    @db.Uuid
+  /// 등록 정보를 최근 변경한 시각입니다.
+  updated_at DateTime  @default(now()) @updatedAt @db.Timestamptz(3)
+  /// 서버가 확인한 최근 변경 주체입니다.
+  updated_by String    @db.Uuid
+  /// 신규 작업 사용을 금지한 시각입니다. 과거 감사 식별자는 보존합니다.
+  deleted_at DateTime? @db.Timestamptz(3)
+
+  @@schema("accounts")
+}
+
+/// 트랜잭션을 완료한 명령의 재시도 결과입니다. 업무 변경과 같은 트랜잭션에 저장합니다.
+/// 작업 식별자가 같고 입력 해시가 다르면 충돌로 거부합니다. 실패한 트랜잭션은 남기지 않습니다.
+/// @namespace 계정
+model command_receipts {
+  /// 클라이언트가 재시도에도 유지하는 명령 UUID입니다. 자동 생성하지 않습니다.
+  id            String    @id(map: "pk_command_receipts") @db.Uuid
+  /// 인증으로 확인한 실행 사용자입니다. 재시도는 같은 사용자만 허용합니다.
+  actor_user_id String    @db.Uuid
+  /// 명령 종류의 서버 코드입니다.
+  command_type  String    @db.VarChar(64)
+  /// 정규화한 입력 계약의 소문자 SHA-256 값입니다.
+  request_hash  String    @db.Char(64)
+  /// 재시도에서 반환할 비밀값이 없는 완료 결과입니다.
+  result        Json      @db.JsonB
+  /// 명령을 완료한 시각입니다.
+  created_at    DateTime  @default(now()) @db.Timestamptz(3)
+  /// 서버가 확인한 생성 주체입니다.
+  created_by    String    @db.Uuid
+  /// 완료 시각과 같은 값입니다. 완료 결과는 덮어쓰지 않습니다.
+  updated_at    DateTime  @default(now()) @db.Timestamptz(3)
+  /// 서버가 확인한 최근 변경 주체입니다.
+  updated_by    String    @db.Uuid
+  /// 보존 표시입니다. 같은 작업 식별자를 재사용하지 않습니다.
+  deleted_at    DateTime? @db.Timestamptz(3)
+
+  actor users @relation(fields: [actor_user_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@index([actor_user_id, created_at], map: "ix_command_receipts_actor_time")
+  @@schema("accounts")
+}
+
+/// 기기 간 이어할 수 있는 서버 타이머입니다. 실행·일시정지 타이머는 작업 공간당 하나입니다.
+/// 이관은 타이머와 소유자 식별자를 바꾸지 않습니다. 종료와 기록 생성은 원자적으로 처리합니다.
+/// @namespace 프로젝트
+model project_timers {
+  /// 서버 타이머의 안정적인 UUID 식별자입니다.
+  id                  String         @id(map: "pk_project_timers") @default(uuid()) @db.Uuid
+  /// 현재 개인 작업 공간의 식별자입니다. 프로젝트는 작업 공간을 통해 조회합니다.
+  workspace_id        String         @db.Uuid
+  /// 타이머를 소유한 사용자입니다. 작업 공간 소유자와 같아야 합니다.
+  owner_user_id       String         @db.Uuid
+  /// 실행·일시정지·종료 상태입니다.
+  status              e_timer_status @default(running)
+  /// 현재 실행 구간의 시작 시각입니다. 일시정지와 종료 상태에서는 NULL입니다.
+  started_at          DateTime?      @db.Timestamptz(3)
+  /// 완료한 실행 구간의 누적 초입니다. 현재 실행 구간은 조회·상태 변경 시 더합니다.
+  accumulated_seconds Int            @default(0)
+  /// 오래된 기기의 상태 변경을 거부할 변경 번호입니다.
+  version             Int            @default(0)
+  /// 기록 생성을 완료하고 타이머를 종료한 시각입니다.
+  stopped_at          DateTime?      @db.Timestamptz(3)
+  /// 종료와 같은 트랜잭션에서 생성한 기록입니다. 종료하지 않았으면 NULL입니다.
+  record_id           String?        @unique(map: "ux_project_timers_record") @db.Uuid
+  /// 타이머 행을 생성한 시각입니다.
+  created_at          DateTime       @default(now()) @db.Timestamptz(3)
+  /// 서버가 확인한 생성 주체입니다.
+  created_by          String         @db.Uuid
+  /// 행을 최근 변경한 시각입니다.
+  updated_at          DateTime       @default(now()) @updatedAt @db.Timestamptz(3)
+  /// 서버가 확인한 최근 변경 주체입니다.
+  updated_by          String         @db.Uuid
+  /// 논리삭제 시각입니다. 콘텐츠 복구로 실행 타이머를 다시 시작하지 않습니다.
+  deleted_at          DateTime?      @db.Timestamptz(3)
+
+  workspace project_workspaces @relation(fields: [workspace_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  owner     users              @relation(fields: [owner_user_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  record    project_records?   @relation(fields: [record_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@index([workspace_id, status], map: "ix_project_timers_workspace_state")
+  @@index([owner_user_id], map: "ix_project_timers_owner")
+  @@schema("projects")
+}
+
+/// 권한을 확인한 운영자의 신고 조치 이력입니다. 생성한 업무 필드와 결과를 수정하지 않습니다.
+/// 실행 주체는 created_by로 남깁니다. 일반 사용자에게 이력 수정 권한을 부여하지 않습니다.
+/// @namespace 커뮤니티
+model report_actions {
+  /// 조치 이력의 UUID 식별자입니다.
+  id          String    @id(map: "pk_report_actions") @default(uuid()) @db.Uuid
+  /// 조치 대상 신고의 식별자입니다.
+  report_id   String    @db.Uuid
+  /// 실행한 상태 변경·숨김·차단 조치의 서버 코드입니다.
+  action_code String    @db.VarChar(64)
+  /// 조치 이유입니다. 일반 사용자에게 비공개인 운영 근거를 포함할 수 있습니다.
+  reason      String    @db.Text
+  /// 조치 실행 결과입니다. 인증 비밀값을 포함하지 않습니다.
+  result      Json      @db.JsonB
+  /// 조치를 기록한 시각입니다.
+  created_at  DateTime  @default(now()) @db.Timestamptz(3)
+  /// 인증으로 확인한 조치 실행 주체입니다.
+  created_by  String    @db.Uuid
+  /// 생성 시각과 같은 값입니다. 업무 필드와 결과를 덮어쓰지 않습니다.
+  updated_at  DateTime  @default(now()) @db.Timestamptz(3)
+  /// 서버가 확인한 최근 변경 주체입니다.
+  updated_by  String    @db.Uuid
+  /// 보존 표시입니다. 표시 변경으로 조치 이력을 잃지 않습니다.
+  deleted_at  DateTime? @db.Timestamptz(3)
+
+  report reports @relation(fields: [report_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@index([report_id, created_at, id], map: "ix_report_actions_report_time")
+  @@schema("community")
 }

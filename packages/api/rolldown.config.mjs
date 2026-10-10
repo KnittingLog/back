@@ -15,7 +15,9 @@ export default {
   output: {
     dir: "./lib",
     format: "esm",
-    sourcemap: true,
+    // 현재 ttsc 변환은 매핑을 반환하지 않는다. 부정확한 ESM 맵은 발행하지 않는다.
+    // TypeScript 빌드가 생성하는 CommonJS 소스맵은 그대로 유지한다.
+    sourcemap: false,
     entryFileNames: "[name].mjs",
     preserveModules: true,
     preserveModulesRoot: "src",

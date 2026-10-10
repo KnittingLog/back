@@ -1,8 +1,8 @@
 import { IPerformance } from "@knittinglog/api";
 import core from "@nestia/core";
-import { Controller } from "@nestjs/common";
+import { Controller, VERSION_NEUTRAL } from "@nestjs/common";
 
-@Controller("monitors/performance")
+@Controller({ path: "monitors/performance", version: VERSION_NEUTRAL })
 export class MonitorPerformanceController {
   /**
    * Get performance information.

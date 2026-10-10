@@ -1,7 +1,7 @@
 import core from "@nestia/core";
-import { Controller } from "@nestjs/common";
+import { Controller, VERSION_NEUTRAL } from "@nestjs/common";
 
-@Controller("monitors/health")
+@Controller({ path: "monitors/health", version: VERSION_NEUTRAL })
 export class MonitorHealthController {
   /**
    * Health check API.
