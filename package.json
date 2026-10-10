@@ -30,12 +30,6 @@
   },
   "homepage": "https://github.com/samchon/backend",
   "packageManager": "pnpm@10.10.0",
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "prisma",
-      "@prisma/engines"
-    ]
-  },
   "devDependencies": {
     "@ttsc/lint": "catalog:typescript"
   }

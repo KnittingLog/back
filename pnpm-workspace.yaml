@@ -1,6 +1,9 @@
 packages:
   - "config"
   - "packages/*"
+onlyBuiltDependencies:
+  - "prisma"
+  - "@prisma/engines"
 patchedDependencies:
   "@ttsc/lint@0.30.4": "patches/@ttsc__lint@0.30.4.patch"
 catalogs:

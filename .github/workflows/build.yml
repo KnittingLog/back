@@ -58,7 +58,7 @@ jobs:
       #   working-directory: packages/backend
       #   run: pnpm schema postgres root
 
-      - name: Check Test Types
+      - name: Check requirement evidence and test types
         run: pnpm check:evidence
 
       - name: Unit Tests

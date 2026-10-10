@@ -15,13 +15,16 @@
 
 ## Evidence Graph
 
-설정 소유자는 `packages/backend/lint.config.ts`이다.
+설정 소유자는 `packages/backend/lint.evidence.config.ts`이다.
 공유 lint 설정과 생성 SDK에는 Evidence 규칙을 추가하지 않는다.
 
 참조 범위는 `docs/requirements.md`의 H2·H3 제목이다.
 근거 범위는 KnittingLog 컨트롤러·Provider와 API·단위·통합 테스트이다.
 TypeScript 파일은 해당 검사에서 사용하는 tsconfig의 Program에 포함되어야 한다.
-일반 backend 빌드는 구현 파일만 검사한다. 아래 명령은 테스트 파일도 포함한다.
+일반 빌드와 lint는 기존 코드 규칙과 타입을 검사한다.
+아래 별도 명령은 `test/tsconfig.evidence.json`으로 구현과 테스트의 전체 요구사항 연결을 검사한다.
+DDL 승인과 운영 복구 등 코드만으로 증명할 수 없는 요구사항의 누락도 계속 보고한다.
+CI도 빌드 다음의 독립 단계에서 같은 명령을 실행한다.
 
 ```sh
 pnpm check:evidence
@@ -104,7 +107,9 @@ DB·API·운영 검증은 기존 수용 절차로 별도 수행한다.
 | 별도 임시 Evidence 테스트 | `error` 수준에서 근거 누락은 종료 코드 2. 유효한 태그 추가 후 종료 코드 0 |
 | `pnpm -C packages/api build:rolldown` | 통과. `SOURCEMAP_BROKEN` 경고 있음 |
 
-번들 빌드는 sourcemap 정확성을 검증하지 않았다.
+이전 번들 빌드는 sourcemap 정확성을 검증하지 않았다.
+현재 ESM 빌드는 매핑을 반환하지 않는 ttsc 변환의 부정확한 소스맵을 발행하지 않는다.
+CommonJS 빌드의 TypeScript 소스맵은 유지한다. `SOURCEMAP_BROKEN` 로그를 필터링하지 않는다.
 번들러가 생성한 `.ttsc/records`는 Git 추적에서 제외한다.
 기존 Nestia·Typia의 peer 버전 경고는 이번 설정에서 변경하지 않았다.
 현재 실행 중인 Codex 대화에서 MCP 도구가 다시 로드되었는지는 검증하지 않았다.
