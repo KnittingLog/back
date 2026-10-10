@@ -10,8 +10,11 @@ const graph: ITtscEvidenceGraphConfig = {
       type: "typescript",
       root: __dirname,
       files: [
-        "src/controllers/knittinglog/**/*.ts",
-        "src/providers/knittinglog/**/*.ts",
+        "src/controllers/KnittingLogModule.ts",
+        "src/controllers/common/KnittingLogExceptionFilter.ts",
+        "src/controllers/{auth,accounts,policies,social,projects,workspaces,records,community,reports}/v1/**/*.ts",
+        "src/providers/{auth,accounts,policies,social,projects,workspaces,records,community,reports}/**/*.ts",
+        "src/providers/common/KnittingLogContext.ts",
         "test/features/api/knittinglog/**/*.ts",
         "test/unit/**/*.ts",
         "test/integration/**/*.ts",

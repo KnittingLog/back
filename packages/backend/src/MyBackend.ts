@@ -7,7 +7,7 @@ import { NestFactory } from "@nestjs/core";
 import { MyConfiguration } from "./MyConfiguration";
 import { MyModule } from "./MyModule";
 import { MyGlobal } from "./MyGlobal";
-import { KnittingLogExceptionFilter } from "./controllers/knittinglog/KnittingLogExceptionFilter";
+import { KnittingLogExceptionFilter } from "./controllers/common/KnittingLogExceptionFilter";
 
 export class MyBackend {
   private application_?: INestApplication;

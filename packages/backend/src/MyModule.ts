@@ -1,6 +1,6 @@
 import { Module } from "@nestjs/common";
 import { MonitorModule } from "./controllers/monitors/MonitorModule";
-import { KnittingLogModule } from "./controllers/knittinglog/KnittingLogModule";
+import { KnittingLogModule } from "./controllers/KnittingLogModule";
 
 @Module({
   imports: [MonitorModule, KnittingLogModule],

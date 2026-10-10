@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 
 import { MyGlobal } from "../../src/MyGlobal";
-import { KnittingLogContext as K } from "../../src/providers/knittinglog/KnittingLogContext";
+import { KnittingLogContext as K } from "../../src/providers/common/KnittingLogContext";
 import { assertIsolatedPostgresUrl } from "../helpers/IsolatedPostgres";
 
 async function main(): Promise<void> {

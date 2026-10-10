@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 
-import { AccountProvider } from "../../src/providers/knittinglog/AccountProvider";
-import { KnittingLogContext as K } from "../../src/providers/knittinglog/KnittingLogContext";
-import { PolicyProvider } from "../../src/providers/knittinglog/PolicyProvider";
+import { AccountProvider } from "../../src/providers/accounts/AccountProvider";
+import { KnittingLogContext as K } from "../../src/providers/common/KnittingLogContext";
+import { PolicyProvider } from "../../src/providers/policies/PolicyProvider";
 
 // DB 연결 없이 응답 투영과 정렬 계약만 검증합니다.
 async function main(): Promise<void> {

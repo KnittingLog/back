@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 
 import { MyGlobal } from "../../src/MyGlobal";
-import { KnittingLogContext as K } from "../../src/providers/knittinglog/KnittingLogContext";
+import { KnittingLogContext as K } from "../../src/providers/common/KnittingLogContext";
 import { assertIsolatedPostgresUrl } from "../helpers/IsolatedPostgres";
 
 class RollbackVerified extends Error {}

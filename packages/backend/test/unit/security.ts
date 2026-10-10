@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 
-import { Security } from "../../src/providers/knittinglog/Security";
+import { Security } from "../../src/providers/auth/Security";
 
 async function main(): Promise<void> {
   assert.equal(Security.identifier("  USER.Name_1  "), "user.name_1");
