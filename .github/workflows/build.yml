@@ -58,6 +58,17 @@ jobs:
       #   working-directory: packages/backend
       #   run: pnpm schema postgres root
 
-      - name: Test
+      - name: Check Test Types
+        run: pnpm check:evidence
+
+      - name: Unit Tests
         working-directory: packages/backend
-        run: pnpm test --reset false --simultaneous 16
+        run: |
+          for test in test/unit/*.ts; do
+            pnpm ttsx --project test/tsconfig.json "$test"
+          done
+
+      # DB 없는 모니터 검사에 격리 DB 쓰기 테스트를 포함하지 않는다.
+      - name: Monitor Tests
+        working-directory: packages/backend
+        run: pnpm ttsx --project test/tsconfig.json test/index.ts --reset false --simultaneous 16 --include test_api_monitor_
