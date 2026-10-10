@@ -29,8 +29,16 @@ async function main(): Promise<void> {
     const read = (route: string) => fetch(`${host}${route}`, { redirect: "error" });
     assert.equal((await read("/api/v1/contract")).status, 200);
     assert.deepEqual(await (await read("/api/v1/contract")).json(), { version: 1 });
-    for (const route of ["/contract", "/api/contract", "/api/v2/contract"]) {
-      assert.equal((await read(route)).status, 404, route);
+    const preflight = await fetch(`${host}/api/v1/contract`, {
+      method: "OPTIONS", headers: { Origin: "https://example.invalid", "Access-Control-Request-Method": "GET" },
+    });
+    assert.equal(preflight.status, 204);
+    assert.equal(preflight.headers.get("access-control-allow-origin"), "*");
+    for (const route of ["/contract", "/api", "/api/", "/api/contract", "/api/v2/contract", "/api/v1/monitors/health"]) {
+      const response = await read(route);
+      assert.equal(response.status, 404, route);
+      assert.ok(response.headers.get("content-type")?.includes("application/json"), "버전 경계 오류는 JSON으로 응답합니다.");
+      assert.deepEqual(await response.json(), { code: "NOT_FOUND", message: "대상을 찾을 수 없습니다." });
     }
     assert.equal((await read("/monitors/health")).status, 200);
     assert.equal((await read("/api/v1/monitors/health")).status, 404);
