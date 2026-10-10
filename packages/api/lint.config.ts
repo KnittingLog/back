@@ -1,8 +1,7 @@
 import type { ITtscLintConfig } from "@ttsc/lint";
 
 const config = {
-  extends: "../../config/lint.config.ts",
-  ignores: ["src/functional/**/*.ts"],
+  extends: "../../lint.config.ts",
 } satisfies ITtscLintConfig;
 
 export default config;

@@ -11,23 +11,23 @@ catalogs:
       version: 1.2.13
   samchon:
     '@nestia/benchmark':
-      specifier: ^12.1.0
-      version: 12.1.0
+      specifier: 14.0.3
+      version: 14.0.3
     '@nestia/core':
-      specifier: ^12.1.0
-      version: 12.1.0
+      specifier: 14.0.3
+      version: 14.0.3
     '@nestia/e2e':
-      specifier: ^12.1.0
-      version: 12.1.0
+      specifier: 14.0.3
+      version: 14.0.3
     '@nestia/fetcher':
-      specifier: ^12.1.0
-      version: 12.1.0
+      specifier: 14.0.3
+      version: 14.0.3
     '@nestia/sdk':
-      specifier: ^12.1.0
-      version: 12.1.0
+      specifier: 14.0.3
+      version: 14.0.3
     nestia:
-      specifier: ^12.1.0
-      version: 12.1.0
+      specifier: 14.0.3
+      version: 14.0.3
     tgrid:
       specifier: ^1.2.1
       version: 1.2.1
@@ -35,21 +35,21 @@ catalogs:
       specifier: ^3.0.0
       version: 3.0.0
     typia:
-      specifier: 15.1.0
-      version: 15.1.0
+      specifier: 15.0.0
+      version: 15.0.0
   typescript:
     '@ttsc/lint':
-      specifier: ^0.21.0
-      version: 0.21.0
+      specifier: 0.30.4
+      version: 0.30.4
     '@ttsc/paths':
-      specifier: ^0.21.0
-      version: 0.21.0
+      specifier: 0.30.4
+      version: 0.30.4
     '@ttsc/unplugin':
-      specifier: ^0.21.0
-      version: 0.21.0
+      specifier: 0.30.4
+      version: 0.30.4
     ttsc:
-      specifier: ^0.21.0
-      version: 0.21.0
+      specifier: 0.30.4
+      version: 0.30.4
     typescript:
       specifier: ^7.0.2
       version: 7.0.2
@@ -63,13 +63,17 @@ catalogs:
 
 importers:
 
-  .: {}
+  .:
+    devDependencies:
+      '@ttsc/lint':
+        specifier: catalog:typescript
+        version: 0.30.4
 
   config:
     devDependencies:
       '@ttsc/lint':
         specifier: catalog:typescript
-        version: 0.21.0
+        version: 0.30.4
       typescript:
         specifier: catalog:typescript
         version: 7.0.2
@@ -78,23 +82,23 @@ importers:
     dependencies:
       '@nestia/fetcher':
         specifier: catalog:samchon
-        version: 12.1.0
+        version: 14.0.3
       tgrid:
         specifier: catalog:samchon
         version: 1.2.1
       typia:
         specifier: catalog:samchon
-        version: 15.1.0(ttsc@0.21.0)
+        version: 15.0.0(ttsc@0.30.4)
     devDependencies:
       '@knittinglog/api':
         specifier: workspace:^
         version: 'link:'
       '@ttsc/lint':
         specifier: catalog:typescript
-        version: 0.21.0
+        version: 0.30.4
       '@ttsc/unplugin':
         specifier: catalog:typescript
-        version: 0.21.0(ttsc@0.21.0)
+        version: 0.30.4(ttsc@0.30.4)
       rimraf:
         specifier: catalog:utils
         version: 6.1.3
@@ -106,7 +110,7 @@ importers:
         version: 0.2.17
       ttsc:
         specifier: catalog:typescript
-        version: 0.21.0
+        version: 0.30.4
       typescript:
         specifier: catalog:typescript
         version: 7.0.2
@@ -118,13 +122,13 @@ importers:
         version: link:../api
       '@nestia/core':
         specifier: catalog:samchon
-        version: 12.1.0(@nestia/fetcher@12.1.0)(@nestjs/common@12.1.2(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@12.1.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)(typia@15.1.0(ttsc@0.21.0))
+        version: 14.0.3(@nestia/fetcher@14.0.3)(@nestjs/common@12.1.2(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@12.1.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)(ttsc@0.30.4)(typia@15.0.0(ttsc@0.30.4))
       '@nestia/fetcher':
         specifier: catalog:samchon
-        version: 12.1.0
+        version: 14.0.3
       '@nestia/sdk':
         specifier: catalog:samchon
-        version: 12.1.0(@nestia/core@12.1.0(@nestia/fetcher@12.1.0)(@nestjs/common@12.1.2(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@12.1.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)(typia@15.1.0(ttsc@0.21.0)))(@types/node@24.19.1)
+        version: 14.0.3(@nestia/core@14.0.3(@nestia/fetcher@14.0.3)(@nestjs/common@12.1.2(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@12.1.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)(ttsc@0.30.4)(typia@15.0.0(ttsc@0.30.4)))
       '@nestjs/common':
         specifier: ^12.1.2
         version: 12.1.2(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -172,26 +176,26 @@ importers:
         version: 3.0.0
       typia:
         specifier: catalog:samchon
-        version: 15.1.0(ttsc@0.21.0)
+        version: 15.0.0(ttsc@0.30.4)
       uuid:
         specifier: catalog:utils
         version: 13.0.2
     devDependencies:
       '@nestia/benchmark':
         specifier: catalog:samchon
-        version: 12.1.0
+        version: 14.0.3
       '@nestia/e2e':
         specifier: catalog:samchon
-        version: 12.1.0
+        version: 14.0.3
       '@nestjs/cli':
         specifier: ^12.0.8
         version: 12.0.8(@types/node@24.19.1)(fork-ts-checker-webpack-plugin@9.1.0(typescript@7.0.2)(webpack@5.111.1))(prettier@3.9.4)(tsconfig-paths-webpack-plugin@4.2.0)(webpack-node-externals@3.0.0)(webpack@5.111.1)
       '@ttsc/lint':
         specifier: catalog:typescript
-        version: 0.21.0
+        version: 0.30.4
       '@ttsc/paths':
         specifier: catalog:typescript
-        version: 0.21.0
+        version: 0.30.4
       '@types/cli-progress':
         specifier: ^3.11.5
         version: 3.11.6
@@ -230,7 +234,7 @@ importers:
         version: 8.2.7(@types/node@24.19.1)
       nestia:
         specifier: catalog:samchon
-        version: 12.1.0
+        version: 14.0.3
       prisma-markdown:
         specifier: ^4.0.0
         version: 4.0.0(@prisma/client@7.10.0(prisma@7.10.0(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(typescript@7.0.2))(typescript@7.0.2))(prisma@7.10.0(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(typescript@7.0.2))
@@ -242,7 +246,7 @@ importers:
         version: 5.0.1(express@4.22.3)
       ttsc:
         specifier: catalog:typescript
-        version: 0.21.0
+        version: 0.30.4
       typescript:
         specifier: catalog:typescript
         version: 7.0.2
@@ -280,8 +284,21 @@ packages:
     resolution: {integrity: sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw==}
     engines: {node: '>=6.9.0'}
 
+  '@babel/helper-string-parser@7.29.7':
+    resolution: {integrity: sha512-Pb5ijPrZ89GDH8223L4UP8i6QApWxs04RbPQJTeWDV0/keR2E36MeKnyr6LYmUUvqRRI+Iv87SuF1W6ErINzYw==}
+    engines: {node: '>=6.9.0'}
+
   '@babel/helper-validator-identifier@7.29.7':
     resolution: {integrity: sha512-qehxGkRj55h/ff8EMaJ+cYhyaKlHIxqYDn682wQD7RNp9UujOQsHog2uS0r2vzr4pW+sXf90NeeayjcNaX3fFg==}
+    engines: {node: '>=6.9.0'}
+
+  '@babel/parser@7.29.9':
+    resolution: {integrity: sha512-CjXrNHTnvqBVqHgdBysY3vk2T8tpJHb5/RMeHJBTyVa9xgugCB0CJTx/3oO8RV2QRQP391RWpB7D6hLjm8V9uA==}
+    engines: {node: '>=6.0.0'}
+    hasBin: true
+
+  '@babel/types@7.29.8':
+    resolution: {integrity: sha512-Vj1jF3cPfxg7OAfoI7QnVKLoILlm2JF9pnVHrX8qx7AHMiYWT+NDAA7jChlNgRS4WTLc/fD1lXLmPixluj+3Gg==}
     engines: {node: '>=6.9.0'}
 
   '@borewit/text-codec@0.2.2':
@@ -469,9 +486,6 @@ packages:
   '@jridgewell/source-map@0.3.11':
     resolution: {integrity: sha512-ZMp1V8ZFcPG5dIWnQLr3NSI1MiCU7UETdS/A0G8V/XWHvJv3ZsFqutJn1Y5RPmAPX6F3BiE397OqveU/9NCuIA==}
 
-  '@jridgewell/sourcemap-codec@1.5.5':
-    resolution: {integrity: sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og==}
-
   '@jridgewell/sourcemap-codec@1.6.0':
     resolution: {integrity: sha512-T7jf+5zgsZHwNJ4lvQ7/aezbyk0nNX+zJVWpmHA7VYsEx7a7qr5Rg5IbtJFqkgze5Y2sruq1RUY8Q837Od7iFw==}
 
@@ -482,34 +496,37 @@ packages:
     resolution: {integrity: sha512-Z7C/xXCiGWsg0KuKsHTKJxbWhpI3Vs5GwLfOean7MGyVFGqdRgBbAjOCh6u4bbjPc/8MJ2pZmK/0DLdCbivLDA==}
     engines: {node: '>=8'}
 
-  '@nestia/benchmark@12.1.0':
-    resolution: {integrity: sha512-IGZFCog9Iqd4UE64svrPmfz1+sZVpp8qXwpMoEMqjatVnBFEEuLwNyF6kgu0DQ38lony3kGpYSnyKUeR8sIEwA==}
+  '@nestia/benchmark@14.0.3':
+    resolution: {integrity: sha512-wYNh6Ou/8f58T50APZC8Y0X9TCz9x14N0N21VqnfhOqlM4OwOcRbIP9hTXkrdJkYVIjM3/DRxdsy+FjukyFZHA==}
 
-  '@nestia/core@12.1.0':
-    resolution: {integrity: sha512-1phNYnagpLuqG9BhqXC25vJNayZ1FNzZOcfFDJGeHeq1QphIr17kz7pAkfaJ8m+9+1CPlS1BCkF2V+b910PBKg==}
+  '@nestia/core@14.0.3':
+    resolution: {integrity: sha512-5+4P9nugCDDjHQ6fJ1SHiEiy6JDEXtPuUm4jktHuGKLZ+g48O6YroxyPmMvFyygfry5/dlVqVlDqtQ9DhNDQwg==}
     peerDependencies:
       '@modelcontextprotocol/sdk': ^1.18.0
-      '@nestia/fetcher': ^12.1.0
-      '@nestjs/common': '>=7.0.1'
-      '@nestjs/core': '>=7.0.1'
+      '@nestia/fetcher': ^14.0.3
+      '@nestjs/common': '>=11.0.0'
+      '@nestjs/core': '>=11.0.0'
       reflect-metadata: '>=0.1.12'
-      rxjs: '>=6.0.3'
-      typia: ^13.2.0
+      rxjs: '>=7.1.0'
+      ttsc: '>=0.19.2'
+      typia: 15.0.0
     peerDependenciesMeta:
       '@modelcontextprotocol/sdk':
         optional: true
+      ttsc:
+        optional: true
 
-  '@nestia/e2e@12.1.0':
-    resolution: {integrity: sha512-WjhNi9YGBDPEq5ik8ApgTPxI6RxezzWdvDiBx7hmqnhEKqzdHxGD5T+aleuNkJdvKYPrSdS0crDynLfe+38fMw==}
+  '@nestia/e2e@14.0.3':
+    resolution: {integrity: sha512-JRwB0OFRoorKy2rTHdM1ovCA+MULeGBhsOYL0ohJ53rC03CSlc80kXDU34JMRZI9U7qEqFI2axqkEH0JBqm8Yw==}
 
-  '@nestia/fetcher@12.1.0':
-    resolution: {integrity: sha512-k6GV5dCiyVXvvoDN9bDP/X49lK32amCaG4VcZg0K0lEEiDCWzYUtwJMcojliBgmujmHVF6HdolbZejerXrh1OA==}
+  '@nestia/fetcher@14.0.3':
+    resolution: {integrity: sha512-rj2l+Fam9grDtDRQMjXgHX3F4zBPOICa/g4MdvpAtUyd4Riqjm/p7z2y77xkyT5xQmLA4tw9l7Q5HGShg9+bHg==}
 
-  '@nestia/sdk@12.1.0':
-    resolution: {integrity: sha512-mN5+FzTPbeoCUlGaaJem+rNQYaRsop+Rz1d7Ull8i4sVW56jOka7KtQZltQReVLFr6zdUOKcOesUEzOTrFR3BQ==}
+  '@nestia/sdk@14.0.3':
+    resolution: {integrity: sha512-yAaA090lMrsc1ZaAaKDywGxjd0YY4bEDSRG/1A+fw9+kuEjO95QrPDQ+E96wNKWZVOlncCizvsETLnLq74Wufw==}
     hasBin: true
     peerDependencies:
-      '@nestia/core': ^12.1.0
+      '@nestia/core': ^14.0.3
 
   '@nestjs/cli@12.0.8':
     resolution: {integrity: sha512-iqm+KXb8cnpnlD4hMBf1w2/4i1GSs0DCLI7oyP4MTmwf9KmjTG1SpAjkl/D+kKuUToycBrMF4+eSwyPVdTMGKQ==}
@@ -823,36 +840,42 @@ packages:
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [arm64]
     os: [linux]
+    libc: [glibc]
 
   '@rolldown/binding-linux-arm64-musl@1.2.13':
     resolution: {integrity: sha512-xU+Kvv9N2A3SY35zFh1FWWNjxbadE/BKeqnkXe7vScU4GZsw757BlVmDLITZEq8DPpk6m7uoDYkK7P+x/uU5Ow==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [arm64]
     os: [linux]
+    libc: [musl]
 
   '@rolldown/binding-linux-ppc64-gnu@1.2.13':
     resolution: {integrity: sha512-XMk/hnhh25oQ756Lclb1Q11h4ll0xC0Esa5w4Vzp+mAE2S3AGJgeM0SonrIgY8fHhjarb6hcoTuwoFG0VVP2ig==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [ppc64]
     os: [linux]
+    libc: [glibc]
 
   '@rolldown/binding-linux-s390x-gnu@1.2.13':
     resolution: {integrity: sha512-U1BoTHYmlywE2n3HUWjzZ+8EQsKr+OwpxYuDWaubx42tUL8QSL7nOqRz/NVHanibbFP3M1Rxuprz/wNcbMKjqw==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [s390x]
     os: [linux]
+    libc: [glibc]
 
   '@rolldown/binding-linux-x64-gnu@1.2.13':
     resolution: {integrity: sha512-J4cm80Pc6wEwV5AZ42o62sIQgDk+Y7R2s646jIwuvO+4V46QB58N4vVuMPWCBaNgursXLpmUWJV//WQAkPvHBQ==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
   '@rolldown/binding-linux-x64-musl@1.2.13':
     resolution: {integrity: sha512-W0euZS40U4V6JkmEnVCIX9mcsL6cbXQ4X8c2w+MMOIjFg68TXUW+u3RT+2e1t1pv9mg/EP3pDtK3POXdQ7Rxyw==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [x64]
     os: [linux]
+    libc: [musl]
 
   '@rolldown/binding-openharmony-arm64@1.2.13':
     resolution: {integrity: sha512-do/AF/4n9MRshia3a5aXoy8xM2c6mgfT6D7H/dY6my5z+hfCIR4ab7mk4IRj++nsEQpKy39kd0DQnDq+r692tw==}
@@ -899,87 +922,87 @@ packages:
   '@tokenizer/token@0.3.0':
     resolution: {integrity: sha512-OvjF+z51L3ov0OyAU0duzsYuvO01PH7x4t6DJx+guahgTnBHkhJdG7soQeTSFLWN3efnHyibZ4Z8l2EuWwJN3A==}
 
-  '@ttsc/darwin-arm64@0.20.1':
-    resolution: {integrity: sha512-iK/sw+0xwQsz+gBDQlraUf6S+tnLrSaCxRdxrJ5eDKiWPiYjshwROi4/wFv/YXzi3Tswkge/PeLKwIR1IonZbw==}
+  '@ttsc/darwin-arm64@0.28.6':
+    resolution: {integrity: sha512-yBEA5cE1pAuQ1OdrWnv0rkeaXl3tOosQoREFvdLqonlwMajQ6HOF27mxoUdXe9Sa+tDErNxxGAJy48RzG0QfUw==}
     cpu: [arm64]
     os: [darwin]
 
-  '@ttsc/darwin-arm64@0.21.0':
-    resolution: {integrity: sha512-RyMwS1veEBKV5VlOUiVqZws/d0dCua5wqmy0cQZTSaeXnBClxsZo9fWQGCO1W+Idb6yw5US+sB2mOmJTezz0Kw==}
+  '@ttsc/darwin-arm64@0.30.4':
+    resolution: {integrity: sha512-+x5qOR5kTTjVJKUYqZtkIs33dS3MnNflJfu4Lg1XRvipqjqzIb6RtUlYJ0uTJcGF1ZZ6N1s+ddGocpFqxD9Zpw==}
     cpu: [arm64]
     os: [darwin]
 
-  '@ttsc/darwin-x64@0.20.1':
-    resolution: {integrity: sha512-17H5Yizen/4guGxAezzwZsZJhOz2ObJmeBlWg32EJCGBuAfhVu7kULuY65Q1GkkcnYT6peCFb0KRNpk26MZQFA==}
+  '@ttsc/darwin-x64@0.28.6':
+    resolution: {integrity: sha512-PscqeodiLb+heY07ogM8dKb4XTKLWx+UHakVNwImrArdURrgMrmifJFO9VvsUU5KAHfNpvEuAMI22KJj81tKXw==}
     cpu: [x64]
     os: [darwin]
 
-  '@ttsc/darwin-x64@0.21.0':
-    resolution: {integrity: sha512-wdgvFk/oZXAELSR2lqe4aRbJ3yBDGYuZupumaZwhDzDs+OcW/OCtynzbX5IUwtHsCBiQm9CvfNztqHfeXj25kg==}
+  '@ttsc/darwin-x64@0.30.4':
+    resolution: {integrity: sha512-thPKMLZhpqaV/HgeEEKvGq8pUrY+cV/8dLT/gF5lbBHvz3kRn5xN9CzPnommQj0dwtcpHEdn/JOSbIW16NPsCA==}
     cpu: [x64]
     os: [darwin]
 
-  '@ttsc/factory@0.20.1':
-    resolution: {integrity: sha512-e7TE1tXagdjHzr3wO3GPUkuQV01j9fKLBeo5A4vM/5TbS4huNxcIMgwKSEdpYBvx/pmGbAq3hl6e3aA/p3Ng1w==}
+  '@ttsc/factory@0.28.6':
+    resolution: {integrity: sha512-+1WTX5LMBy0SlBMf0vGQKxA9g9h22tKQV9tai0SHTWkuuFVNd98qUQvyCE12yO52e7nsaLFTJywCAwCEZC/5ww==}
 
-  '@ttsc/lint@0.21.0':
-    resolution: {integrity: sha512-R2HHj7bJQiI3WOY3lxlGxwJRBZmO6LSHHzE2UaV6tRcrcWH1oW0b7+5kx0My8Ky+65wsGnUySbhB7qMtr+vWlQ==}
+  '@ttsc/lint@0.30.4':
+    resolution: {integrity: sha512-UB8Akjtrcc8iiXL6iuy/jfaXtoFx65VXkbT6gPSsFR/9+rvK7SBozhp09beKrjR1Bcmmvlr8apzdjhwbMo0UWA==}
 
-  '@ttsc/linux-arm64@0.20.1':
-    resolution: {integrity: sha512-8UBXYXW+FzGckL1/2jPodpPF0z2PMzH8xjrv8sztp7y7dHtIMpWjLBfl1/LJdVX1Wy9NTIYOmbBtc+iWeMt3vA==}
+  '@ttsc/linux-arm64@0.28.6':
+    resolution: {integrity: sha512-TrCJXS0P1QnIzs8H5qg4ZfF2n4bfuuXupT3fb1yqGQRqUo7iMYnvARyiMnCWKiyKrz8ogP/6lIr04eutMp2Hiw==}
     cpu: [arm64]
     os: [linux]
 
-  '@ttsc/linux-arm64@0.21.0':
-    resolution: {integrity: sha512-9KA18t+VST6AxXh+pNs9N6KwjcZ5e5vudCCEHLLIRWNHGxONuJj1AVUFD4t6B5Q3wpInG60tIy7QGFZfk00+og==}
+  '@ttsc/linux-arm64@0.30.4':
+    resolution: {integrity: sha512-05Qtl4KOHiAuQIa/qRfwvp0vU7bVWjHQcOjJe0r9R9FdUsBAm51WQe18BnJTxV6cfE0xNaV/Ja/HWm7Qsq5vGQ==}
     cpu: [arm64]
     os: [linux]
 
-  '@ttsc/linux-arm@0.20.1':
-    resolution: {integrity: sha512-KH3F2rqoJVG8k1bPHeIIbsXIiU8Kx33M3tH0zwpk7rCb9vgZwefzNVRm26CJuPy7S8M+IfB5HQyZMDadTiwyEQ==}
+  '@ttsc/linux-arm@0.28.6':
+    resolution: {integrity: sha512-WQeTOUuT1XM/E3Tae5wvXLiGBWx8Ymrvc7/y17HVpBAHmeL0akWGmjV4hiXWF32FNK9NpvjDNEWH8jok/Bcc6A==}
     cpu: [arm]
     os: [linux]
 
-  '@ttsc/linux-arm@0.21.0':
-    resolution: {integrity: sha512-+8dlbyvm6K/an5KEJtChcTTyqWFt+d9uzBYjwwGiUaCibmW9GuJmjiYMmGOD8YFee/JholJwy9TRaaqWcdnp6Q==}
+  '@ttsc/linux-arm@0.30.4':
+    resolution: {integrity: sha512-qNh2qlSnJoZXdYhsejsUXfA8nbOJEyR611S30p6Meqc2Sg6TVlsQT2XaLEDF2CrEcDALCi3pOQAhfWGjwyCa+A==}
     cpu: [arm]
     os: [linux]
 
-  '@ttsc/linux-x64@0.20.1':
-    resolution: {integrity: sha512-1wIZ1iyHbBrVDFfoLYIVHwOYr6fJbXVBPPCnN5xQqAXjLFMYtJ85mGr8PfTwVVpWZpjGtJmZOXcgNI64b7VUvA==}
+  '@ttsc/linux-x64@0.28.6':
+    resolution: {integrity: sha512-8dsXcVyAHOb9f0MG1GuMe+WX205cZYsd7WroGQ6x/IvvRnMbtt3jOsLrZGrMmstm5jbtcFsHc1ALWddg0vabuA==}
     cpu: [x64]
     os: [linux]
 
-  '@ttsc/linux-x64@0.21.0':
-    resolution: {integrity: sha512-1d4hkb/MiVJGXTfK+/ij7TyjDI/Dm+rbvThNiUJe2uO0iwJpdiS8rgokGuCd7Ta5OyfsUnzH+32dstap1Q1HeA==}
+  '@ttsc/linux-x64@0.30.4':
+    resolution: {integrity: sha512-JZrx4sXeQVAJeyGpA8phlffrvbeyIjwme8ZVoBG8gvyT+BswfVgKQhskBaEGDodi6VyM3k53i53e+QcywFN+xQ==}
     cpu: [x64]
     os: [linux]
 
-  '@ttsc/paths@0.21.0':
-    resolution: {integrity: sha512-1gKx/V6gPiVUOnP+2U1m6ulLwNKoeKcsmJ8j2SMl+5lPpXIIzrQtFwR62YY4nn7tfTdCByCpuUbVKiu/xuXQ7g==}
+  '@ttsc/paths@0.30.4':
+    resolution: {integrity: sha512-3gQk+h2RnEm+7ULdWMsbn4if5tO2PzKrnwOnGG9LuWG/JlvvPf097NuPVZqERQ/mwJUwx80yxdCPmjGTrF7Q+Q==}
 
-  '@ttsc/unplugin@0.21.0':
-    resolution: {integrity: sha512-XcyN4zUfO95lLDpLhWGuqVCbG+yDTuZJ8Go4PPTotZG47N2QgjxIxuUyfTyuU2+pPrpTiajIvEMfM/8RB4xRxQ==}
+  '@ttsc/unplugin@0.30.4':
+    resolution: {integrity: sha512-YzAtIzbgzLlUUMsgmoPQ2oYkYzAA+KsrpMq0BjLRa/pEve6NIOOQ1VRzS/nLrUt+VKtvGjHy4P/5w/oRLdbfUw==}
     peerDependencies:
-      ttsc: ^0.21.0
+      ttsc: ^0.30.4
 
-  '@ttsc/win32-arm64@0.20.1':
-    resolution: {integrity: sha512-KMn23gMLN8FB34i1Kt6PlxQnN4u8jELgcsA9zWRMwjf08kmbCEOouFLOrBokIj8nu7c3k8kLvyPYXeXEMiEzwQ==}
+  '@ttsc/win32-arm64@0.28.6':
+    resolution: {integrity: sha512-xsLovpgHAZjoKJguLrHU3qDBsKQ9v2xhjZC5p2Kw8e2VS11Axv3Ywd0RgoV6ME5VcaEcCEyXlS0ZXJMSkJJcSg==}
     cpu: [arm64]
     os: [win32]
 
-  '@ttsc/win32-arm64@0.21.0':
-    resolution: {integrity: sha512-RLxFrcA7cOdHsQNG9R67A+lI5TDhuF1g7WZe+xzw6au6oDpseboyqgcT6wVTOiNViM1qzDkTxSadM6kSumUHvw==}
+  '@ttsc/win32-arm64@0.30.4':
+    resolution: {integrity: sha512-8B9uOwajWhuklP1wvu7ynLddvsLpDygRHtp8zATnIGpipPDqUImcFmsQ7alwI40aEeIvfbI5COFBUd5aDOfbeQ==}
     cpu: [arm64]
     os: [win32]
 
-  '@ttsc/win32-x64@0.20.1':
-    resolution: {integrity: sha512-bxGUBlGE2otet1iYqb+PwKt8VjCWEtpk3DdKDtQ+7PEfFB6eClo25pYIUJfafZtsd74Cg3gTLOB7m7uM3Yq6XA==}
+  '@ttsc/win32-x64@0.28.6':
+    resolution: {integrity: sha512-k2DCIF9LTWlnq4LCgiTBPJ4mtfXnwZetCTLDvAkt37cVi28gWlNkbMr0BnMyimMskHBmKE/pqwxtziiYTx1J6A==}
     cpu: [x64]
     os: [win32]
 
-  '@ttsc/win32-x64@0.21.0':
-    resolution: {integrity: sha512-R+GGTLgou3J2iPiaFrJtT/rOgScXn1UXRD4zsP+AjqQpOkbIvQL8qhr/81SdWtCU76o8gOr7qlfT1TzIAu5tQw==}
+  '@ttsc/win32-x64@0.30.4':
+    resolution: {integrity: sha512-DDdWzQWrmzljRkoHnVxRACO8ikiM3rjuC/QRkPMmyzina0AimihHnOfOOWKdNttfkU9sAdCe3MIkg4ktpL38mQ==}
     cpu: [x64]
     os: [win32]
 
@@ -1220,20 +1243,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@typia/interface@13.2.0':
-    resolution: {integrity: sha512-F0SM5T7d4w8pyfsvQ0Wd8fR41iUwKjzpj/0+z7T87Ue+IS78STBPps5gFgQgM4qfsteVP82S217reJmb1SZRBA==}
-
-  '@typia/interface@13.3.0':
-    resolution: {integrity: sha512-TJb21ylMKBqkUpKn9kQ21CMMJGaTTCNs5hU9u2LV3xUTO41Vctew9GjERCzOpgnpA2MlBqrCTSvuXk4krinWjA==}
-
   '@typia/interface@15.1.0':
     resolution: {integrity: sha512-kiKKWTAmJ8x48eUAkzTwH4AsX3CSe5AcsxGUkzkOqhqwlklxUWIACw93DXTr2F5aDIse3YBExJerWdgURsring==}
-
-  '@typia/utils@13.2.0':
-    resolution: {integrity: sha512-Hi/04+FY5tf9sHQihl0XWsb9QoISiHTbu6/gucUta9iT0/yakofMajRaCSwomRg43ekNNve7L9Hvb/6u5JDkuQ==}
-
-  '@typia/utils@13.3.0':
-    resolution: {integrity: sha512-W9NDW5SfqNBhMe/YwUwp/nyXfzsaovMwQs/eykmfsYqlGx6FoBJnXWK7zdBSfDBkjwF4AZzejqgBlndTxtluZg==}
 
   '@typia/utils@15.1.0':
     resolution: {integrity: sha512-9NLCbKI2rQOA4M9EbEx0HwXfKIUIdkvO2J+6mZQttx2CBfiIspgt0VdJSvmD0hqMKa6LvDdmeBKl13wTizVGog==}
@@ -1357,8 +1368,8 @@ packages:
     resolution: {integrity: sha512-5cvg6CtKwfgdmVqY1WIiXKc3Q1bkRqGLi+2W/6ao+6Y7gu/RCwRuAhGEzh5B4KlszSuTLgZYuqFqo5bImjNKng==}
     engines: {node: '>= 0.6'}
 
-  acorn@8.17.0:
-    resolution: {integrity: sha512-xRQbDb9BnwDafYNn6Vwl839DYVjqXYb1XVGtWAZ1kcDc6iwAL4hg3B1dZlRiuENFeO2H53gFG3in621AdERVAg==}
+  acorn@8.16.0:
+    resolution: {integrity: sha512-UVJyE9MttOsBQIDKw1skb9nAwQuR5wuGD3+82K6JgJlm/Y+KI92oNsMNGZCYdDsVtRHSak0pcV5Dno5+4jh9sw==}
     engines: {node: '>=0.4.0'}
     hasBin: true
 
@@ -1561,6 +1572,9 @@ packages:
   chrome-trace-event@1.0.4:
     resolution: {integrity: sha512-rNjApaLzuwaOTjCiT8lSDdGN1APCiqkChLMJxJPWLunPAt5fy8xgU9/jNOchV84wfIxrA0lRQB7oCT8jrn/wrQ==}
     engines: {node: '>=6.0'}
+
+  cjs-module-lexer@2.2.1:
+    resolution: {integrity: sha512-Ca8swihM+/4yKecYHY52kgJd300hi2lADU/a1RxNTRe+RJ9jvqQlESpbz9DnG9mowez8qwXHB8qYdIUw9e+F5Q==}
 
   classnames@2.5.1:
     resolution: {integrity: sha512-saHYOzhIQs6wy2sVxTM6bUDsQO4F50V9RQ22qBpEdCW+I+/Wmke2HOl6lS6dTpdxVhb88/I6+Hs+438c3lfUow==}
@@ -2531,8 +2545,8 @@ packages:
     resolution: {integrity: sha512-8Ofs/AUQh8MaEcrlq5xOX0CQ9ypTF5dl78mjlMNfOK08fzpgTHQRQPBxcPlEtIw0yRpws+Zo/3r+5WRby7u3Gg==}
     engines: {node: '>= 0.6'}
 
-  nestia@12.1.0:
-    resolution: {integrity: sha512-sXCl647MfCOaoZatnbsrXbYwxjEVOtBtZnySYSGe7jvrxDew3qYSrfz745FwBbW2R7sw6+3zVsM1xGv9Gv/3zg==}
+  nestia@14.0.3:
+    resolution: {integrity: sha512-IEZk0obSzxosgvrhS7f9VbXqo23Wie3hIb+qps8iMM/dd8Ss8xRujaklj6lPkqIe8PRaqCLcCmAqqHw06E9UVg==}
     hasBin: true
 
   node-abort-controller@3.1.1:
@@ -2621,9 +2635,6 @@ packages:
 
   path-parse@1.0.7:
     resolution: {integrity: sha512-LDJzPVEEEPR+y48z93A0Ed0yXb8pAByGWo/k5YYdYgpY2/2EsOsksJrq7lOHxryrVOn1ejG6oAp8ahvOIQD8sw==}
-
-  path-parser@6.1.0:
-    resolution: {integrity: sha512-nAB6J73z2rFcQP+870OHhpkHFj5kO4rPLc2Ol4Y3Ale7F6Hk1/cPKp7cQ8RznKF8FOSvu+YR9Xc6Gafk7DlpYA==}
 
   path-scurry@2.0.2:
     resolution: {integrity: sha512-3O/iVVsJAPsOnpwWIeD+d6z/7PmqApyQePUtCndjatj/9I5LylHvt5qluFaBT3I5h3r1ejfR056c+FCv+NnNXg==}
@@ -2944,9 +2955,6 @@ packages:
     resolution: {integrity: sha512-zJlMCZ0cAR5p/Y4oVpRoqioDMJcGxaXRrQ/4rP4WyR84vc5z/DolXdbvXeDpTwbtocDFr2rhPqHPErDCUtz2kA==}
     engines: {node: '>= 10.13.0'}
 
-  search-params@3.0.0:
-    resolution: {integrity: sha512-8CYNl/bjkEhXWbDTU/K7c2jQtrnqEffIPyOLMqygW/7/b+ym8UtQumcAZjOfMLjZKR6AxK5tOr9fChbQZCzPqg==}
-
   semver@5.7.2:
     resolution: {integrity: sha512-cBznnQ9KjJqU67B52RMC65CMarK2600WFnbkcaiwWq3xy/5haFJlshgnpjovMVJ+Hff49d8GEn0b87C5pDQ10g==}
     hasBin: true
@@ -3156,22 +3164,19 @@ packages:
     resolution: {integrity: sha512-NoZ4roiN7LnbKn9QqE1amc9DJfzvZXxF4xDavcOWt1BPkdx+m+0gJuPM+S0vCe7zTJMYUP0R8pO2XMr+Y8oLIg==}
     engines: {node: '>=6'}
 
-  tslib@1.14.1:
-    resolution: {integrity: sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==}
-
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
 
   tstl@3.0.0:
     resolution: {integrity: sha512-pR83y6/tbJx6jeGRqGJXk2t/eCUynaHEE6zsOLB0Zga8ej61LXtPfoeiROdhezpoCT15+1QMbqKB1Um5kasSKg==}
 
-  ttsc@0.20.1:
-    resolution: {integrity: sha512-TFw/lEkuUJ+/jyg5/9MO4fFyMoVWNmb69GE1+9Nf/JR8mP9DHbt2Nrjilr4OpQSVsu/OoWVgHT/YN8OpPXJEDQ==}
+  ttsc@0.28.6:
+    resolution: {integrity: sha512-7WLqjU7ggpjJrkfrd55oEad1eA5vEHQZIZrt7fMCkVkzdW9TZ/SI1URz4jN9pPakUYF+AtuEoY+Ul5Gw5CgppQ==}
     engines: {node: '>=22.15.0'}
     hasBin: true
 
-  ttsc@0.21.0:
-    resolution: {integrity: sha512-lvPSC1acqHpefBiwP7PuS+E8gyIuHPy9xVQksZRzF7SuWNyGJcB9JrnQIumgUITMNpq6mtu7Iz/f2uDhMu+G4w==}
+  ttsc@0.30.4:
+    resolution: {integrity: sha512-JDw66o8hIkelLp0gMWj7izVzXAXxT+oObILBTOa6MxBGA8a2lqdfMsP++XN0hPYYxKNpyuLVnClBBvehNZyIpw==}
     engines: {node: '>=22.15.0'}
     hasBin: true
 
@@ -3201,17 +3206,8 @@ packages:
     engines: {node: '>=16.20.0'}
     hasBin: true
 
-  typia@13.3.0:
-    resolution: {integrity: sha512-rgJsK244z2J/8zMnRNLEwcZWsWTI+POKgpm5REoox9uM8pdhIELcXCPOSu87KiP48s+Bw9NSUrZwMUqLZ9EPjg==}
-    hasBin: true
-    peerDependencies:
-      ttsc: '>=0.19.2'
-    peerDependenciesMeta:
-      ttsc:
-        optional: true
-
-  typia@15.1.0:
-    resolution: {integrity: sha512-EW+b8jxKrRU/Q0eJXFry53vL6LFRlAMsSvfhKq3hh4pLTiswBWJMs6g4AtNlCPGCYJ0WMbSEME2qqe8DM7PnHg==}
+  typia@15.0.0:
+    resolution: {integrity: sha512-ZP+58aI7G4CK/NKIfgY4zoMDwtJvtEc9bzb3E3QKnAJs/PeGFJEFbjXLiMq0qYapX6z6BGbDi3NLxetmREhwFg==}
     peerDependencies:
       ttsc: '>=0.19.2'
     peerDependenciesMeta:
@@ -3417,8 +3413,18 @@ snapshots:
       picocolors: 1.1.1
     optional: true
 
-  '@babel/helper-validator-identifier@7.29.7':
-    optional: true
+  '@babel/helper-string-parser@7.29.7': {}
+
+  '@babel/helper-validator-identifier@7.29.7': {}
+
+  '@babel/parser@7.29.9':
+    dependencies:
+      '@babel/types': 7.29.8
+
+  '@babel/types@7.29.8':
+    dependencies:
+      '@babel/helper-string-parser': 7.29.7
+      '@babel/helper-validator-identifier': 7.29.7
 
   '@borewit/text-codec@0.2.2': {}
 
@@ -3567,7 +3573,7 @@ snapshots:
 
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:
-      '@jridgewell/sourcemap-codec': 1.5.5
+      '@jridgewell/sourcemap-codec': 1.6.0
       '@jridgewell/trace-mapping': 0.3.31
 
   '@jridgewell/remapping@2.3.5':
@@ -3582,8 +3588,6 @@ snapshots:
       '@jridgewell/gen-mapping': 0.3.13
       '@jridgewell/trace-mapping': 0.3.31
 
-  '@jridgewell/sourcemap-codec@1.5.5': {}
-
   '@jridgewell/sourcemap-codec@1.6.0': {}
 
   '@jridgewell/trace-mapping@0.3.31':
@@ -3593,59 +3597,61 @@ snapshots:
 
   '@lukeed/csprng@1.1.0': {}
 
-  '@nestia/benchmark@12.1.0':
+  '@nestia/benchmark@14.0.3':
     dependencies:
-      '@nestia/fetcher': 12.1.0
+      '@nestia/fetcher': 14.0.3
       tgrid: 1.2.1
       tstl: 3.0.0
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
 
-  '@nestia/core@12.1.0(@nestia/fetcher@12.1.0)(@nestjs/common@12.1.2(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@12.1.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)(typia@15.1.0(ttsc@0.21.0))':
+  '@nestia/core@14.0.3(@nestia/fetcher@14.0.3)(@nestjs/common@12.1.2(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@12.1.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)(ttsc@0.30.4)(typia@15.0.0(ttsc@0.30.4))':
     dependencies:
-      '@nestia/fetcher': 12.1.0
+      '@nestia/fetcher': 14.0.3
       '@nestjs/common': 12.1.2(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/core': 12.1.2(@nestjs/common@12.1.2(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@12.1.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      '@typia/interface': 13.2.0
-      '@typia/utils': 13.2.0
+      '@typia/interface': 15.1.0
+      '@typia/utils': 15.1.0
       get-function-location: 2.0.0
       glob: 11.1.0
-      path-parser: 6.1.0
+      path-to-regexp: 8.4.2
       raw-body: 2.5.3
       reflect-metadata: 0.2.2
       rxjs: 7.8.2
       tgrid: 1.2.1
-      typia: 15.1.0(ttsc@0.21.0)
+      typia: 15.0.0(ttsc@0.30.4)
       ws: 7.5.11
+    optionalDependencies:
+      ttsc: 0.30.4
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
 
-  '@nestia/e2e@12.1.0': {}
+  '@nestia/e2e@14.0.3': {}
 
-  '@nestia/fetcher@12.1.0':
+  '@nestia/fetcher@14.0.3':
     dependencies:
-      '@typia/interface': 13.2.0
-      '@typia/utils': 13.2.0
+      '@typia/interface': 15.1.0
+      '@typia/utils': 15.1.0
 
-  '@nestia/sdk@12.1.0(@nestia/core@12.1.0(@nestia/fetcher@12.1.0)(@nestjs/common@12.1.2(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@12.1.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)(typia@15.1.0(ttsc@0.21.0)))(@types/node@24.19.1)':
+  '@nestia/sdk@14.0.3(@nestia/core@14.0.3(@nestia/fetcher@14.0.3)(@nestjs/common@12.1.2(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@12.1.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)(ttsc@0.30.4)(typia@15.0.0(ttsc@0.30.4)))':
     dependencies:
-      '@nestia/core': 12.1.0(@nestia/fetcher@12.1.0)(@nestjs/common@12.1.2(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@12.1.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)(typia@15.1.0(ttsc@0.21.0))
-      '@nestia/fetcher': 12.1.0
-      '@ttsc/factory': 0.20.1
-      '@typia/interface': 13.2.0
-      '@typia/utils': 13.2.0
+      '@babel/parser': 7.29.9
+      '@nestia/core': 14.0.3(@nestia/fetcher@14.0.3)(@nestjs/common@12.1.2(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@12.1.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)(ttsc@0.30.4)(typia@15.0.0(ttsc@0.30.4))
+      '@nestia/fetcher': 14.0.3
+      '@ttsc/factory': 0.28.6
+      '@typia/interface': 15.1.0
+      '@typia/utils': 15.1.0
       get-function-location: 2.0.0
       glob: 11.1.0
       path-to-regexp: 6.3.0
       prettier: 3.9.4
       tgrid: 1.2.1
       tstl: 3.0.0
-      ttsc: 0.20.1
-      typia: 13.3.0(@types/node@24.19.1)(ttsc@0.20.1)
+      ttsc: 0.28.6
+      typia: 15.0.0(ttsc@0.28.6)
     transitivePeerDependencies:
-      - '@types/node'
       - bufferutil
       - utf-8-validate
 
@@ -4028,57 +4034,57 @@ snapshots:
 
   '@tokenizer/token@0.3.0': {}
 
-  '@ttsc/darwin-arm64@0.20.1':
+  '@ttsc/darwin-arm64@0.28.6':
     optional: true
 
-  '@ttsc/darwin-arm64@0.21.0':
+  '@ttsc/darwin-arm64@0.30.4':
     optional: true
 
-  '@ttsc/darwin-x64@0.20.1':
+  '@ttsc/darwin-x64@0.28.6':
     optional: true
 
-  '@ttsc/darwin-x64@0.21.0':
+  '@ttsc/darwin-x64@0.30.4':
     optional: true
 
-  '@ttsc/factory@0.20.1': {}
+  '@ttsc/factory@0.28.6': {}
 
-  '@ttsc/lint@0.21.0': {}
+  '@ttsc/lint@0.30.4': {}
 
-  '@ttsc/linux-arm64@0.20.1':
+  '@ttsc/linux-arm64@0.28.6':
     optional: true
 
-  '@ttsc/linux-arm64@0.21.0':
+  '@ttsc/linux-arm64@0.30.4':
     optional: true
 
-  '@ttsc/linux-arm@0.20.1':
+  '@ttsc/linux-arm@0.28.6':
     optional: true
 
-  '@ttsc/linux-arm@0.21.0':
+  '@ttsc/linux-arm@0.30.4':
     optional: true
 
-  '@ttsc/linux-x64@0.20.1':
+  '@ttsc/linux-x64@0.28.6':
     optional: true
 
-  '@ttsc/linux-x64@0.21.0':
+  '@ttsc/linux-x64@0.30.4':
     optional: true
 
-  '@ttsc/paths@0.21.0': {}
+  '@ttsc/paths@0.30.4': {}
 
-  '@ttsc/unplugin@0.21.0(ttsc@0.21.0)':
+  '@ttsc/unplugin@0.30.4(ttsc@0.30.4)':
     dependencies:
-      ttsc: 0.21.0
+      ttsc: 0.30.4
       unplugin: 2.3.11
 
-  '@ttsc/win32-arm64@0.20.1':
+  '@ttsc/win32-arm64@0.28.6':
     optional: true
 
-  '@ttsc/win32-arm64@0.21.0':
+  '@ttsc/win32-arm64@0.30.4':
     optional: true
 
-  '@ttsc/win32-x64@0.20.1':
+  '@ttsc/win32-x64@0.28.6':
     optional: true
 
-  '@ttsc/win32-x64@0.21.0':
+  '@ttsc/win32-x64@0.30.4':
     optional: true
 
   '@types/body-parser@1.19.6':
@@ -4281,19 +4287,7 @@ snapshots:
   '@typescript/typescript-win32-x64@7.0.2':
     optional: true
 
-  '@typia/interface@13.2.0': {}
-
-  '@typia/interface@13.3.0': {}
-
   '@typia/interface@15.1.0': {}
-
-  '@typia/utils@13.2.0':
-    dependencies:
-      '@typia/interface': 13.2.0
-
-  '@typia/utils@13.3.0':
-    dependencies:
-      '@typia/interface': 13.3.0
 
   '@typia/utils@15.1.0':
     dependencies:
@@ -4481,7 +4475,7 @@ snapshots:
       mime-types: 3.0.2
       negotiator: 1.0.0
 
-  acorn@8.17.0: {}
+  acorn@8.16.0: {}
 
   acorn@8.19.0: {}
 
@@ -4695,6 +4689,8 @@ snapshots:
       readdirp: 5.1.1
 
   chrome-trace-event@1.0.4: {}
+
+  cjs-module-lexer@2.2.1: {}
 
   classnames@2.5.1: {}
 
@@ -5593,7 +5589,7 @@ snapshots:
 
   negotiator@1.0.0: {}
 
-  nestia@12.1.0: {}
+  nestia@14.0.3: {}
 
   node-abort-controller@3.1.1:
     optional: true
@@ -5686,11 +5682,6 @@ snapshots:
   path-key@3.1.1: {}
 
   path-parse@1.0.7: {}
-
-  path-parser@6.1.0:
-    dependencies:
-      search-params: 3.0.0
-      tslib: 1.14.1
 
   path-scurry@2.0.2:
     dependencies:
@@ -6012,8 +6003,6 @@ snapshots:
       ajv-formats: 3.0.1(ajv@8.20.0)
       ajv-keywords: 5.1.0(ajv@8.20.0)
 
-  search-params@3.0.0: {}
-
   semver@5.7.2: {}
 
   semver@7.8.5: {}
@@ -6259,31 +6248,32 @@ snapshots:
       minimist: 1.2.8
       strip-bom: 3.0.0
 
-  tslib@1.14.1: {}
-
   tslib@2.8.1: {}
 
   tstl@3.0.0: {}
 
-  ttsc@0.20.1:
+  ttsc@0.28.6:
     optionalDependencies:
-      '@ttsc/darwin-arm64': 0.20.1
-      '@ttsc/darwin-x64': 0.20.1
-      '@ttsc/linux-arm': 0.20.1
-      '@ttsc/linux-arm64': 0.20.1
-      '@ttsc/linux-x64': 0.20.1
-      '@ttsc/win32-arm64': 0.20.1
-      '@ttsc/win32-x64': 0.20.1
+      '@ttsc/darwin-arm64': 0.28.6
+      '@ttsc/darwin-x64': 0.28.6
+      '@ttsc/linux-arm': 0.28.6
+      '@ttsc/linux-arm64': 0.28.6
+      '@ttsc/linux-x64': 0.28.6
+      '@ttsc/win32-arm64': 0.28.6
+      '@ttsc/win32-x64': 0.28.6
 
-  ttsc@0.21.0:
+  ttsc@0.30.4:
+    dependencies:
+      acorn: 8.16.0
+      cjs-module-lexer: 2.2.1
     optionalDependencies:
-      '@ttsc/darwin-arm64': 0.21.0
-      '@ttsc/darwin-x64': 0.21.0
-      '@ttsc/linux-arm': 0.21.0
-      '@ttsc/linux-arm64': 0.21.0
-      '@ttsc/linux-x64': 0.21.0
-      '@ttsc/win32-arm64': 0.21.0
-      '@ttsc/win32-x64': 0.21.0
+      '@ttsc/darwin-arm64': 0.30.4
+      '@ttsc/darwin-x64': 0.30.4
+      '@ttsc/linux-arm': 0.30.4
+      '@ttsc/linux-arm64': 0.30.4
+      '@ttsc/linux-x64': 0.30.4
+      '@ttsc/win32-arm64': 0.30.4
+      '@ttsc/win32-x64': 0.30.4
 
   type-fest@0.21.3: {}
 
@@ -6325,27 +6315,21 @@ snapshots:
       '@typescript/typescript-win32-arm64': 7.0.2
       '@typescript/typescript-win32-x64': 7.0.2
 
-  typia@13.3.0(@types/node@24.19.1)(ttsc@0.20.1):
-    dependencies:
-      '@standard-schema/spec': 1.1.0
-      '@typia/interface': 13.3.0
-      '@typia/utils': 13.3.0
-      commander: 10.0.1
-      inquirer: 8.2.7(@types/node@24.19.1)
-      randexp: 0.5.3
-      tinyglobby: 0.2.17
-    optionalDependencies:
-      ttsc: 0.20.1
-    transitivePeerDependencies:
-      - '@types/node'
-
-  typia@15.1.0(ttsc@0.21.0):
+  typia@15.0.0(ttsc@0.28.6):
     dependencies:
       '@typia/interface': 15.1.0
       '@typia/utils': 15.1.0
       randexp: 0.5.3
     optionalDependencies:
-      ttsc: 0.21.0
+      ttsc: 0.28.6
+
+  typia@15.0.0(ttsc@0.30.4):
+    dependencies:
+      '@typia/interface': 15.1.0
+      '@typia/utils': 15.1.0
+      randexp: 0.5.3
+    optionalDependencies:
+      ttsc: 0.30.4
 
   uid@2.0.2:
     dependencies:
@@ -6368,8 +6352,8 @@ snapshots:
   unplugin@2.3.11:
     dependencies:
       '@jridgewell/remapping': 2.3.5
-      acorn: 8.17.0
-      picomatch: 4.0.5
+      acorn: 8.19.0
+      picomatch: 4.0.7
       webpack-virtual-modules: 0.6.2
 
   update-browserslist-db@1.2.3(browserslist@4.28.5):

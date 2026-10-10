@@ -1,8 +1,7 @@
 import type { ITtscLintConfig } from "@ttsc/lint";
 
 const config = {
-  extends: "../../config/lint.config.ts",
-  ignores: ["src/prisma/**/*.ts"],
+  extends: "../../lint.config.ts",
 } satisfies ITtscLintConfig;
 
 export default config;
