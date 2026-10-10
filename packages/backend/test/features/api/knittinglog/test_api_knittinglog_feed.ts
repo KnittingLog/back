@@ -30,6 +30,9 @@ export async function test_api_knittinglog_post_interactions(connection: K.Conne
 }
 
 // V1-801~802, 확정 정책 6.4: 피드는 작성 시각과 UUID 순서를 사용하며 페이지를 중복하지 않습니다.
+/**
+ * @evidence docs/requirements.md#64-피드신고 피드 커서가 중복 없이 정렬된 결과를 이어가는지 검증한다.
+ */
 export async function test_api_knittinglog_feed_cursor(connection: K.Connection): Promise<void> {
   const [author, reader] = await Promise.all([K.register(connection), K.register(connection)]);
   await K.request(author.connection, "PATCH", "/users/me", 200, { visibility: "private" });

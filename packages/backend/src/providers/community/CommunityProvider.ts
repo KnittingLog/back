@@ -148,6 +148,9 @@ export namespace CommunityProvider {
     }
   }
 
+  /**
+   * @evidence docs/requirements.md#64-피드신고 현재 접근 가능 상태를 반영해 게시글 피드를 커서 순서로 조회한다.
+   */
   export async function feed(authorization: string | undefined, query: Query): Promise<Feed> {
     K.keys(query, ["limit", "cursor"]);
     const limit = query.limit ?? 20;

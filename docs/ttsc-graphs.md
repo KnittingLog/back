@@ -48,6 +48,24 @@ pnpm check:evidence
 따라서 H2·H3 연결 검사는 기능 ID별 수용 검사나 API 실행 결과를 대신하지 않는다.
 `documented`, `singular`, `todo`, `review` 규칙은 이번 초기 설정에서 활성화하지 않는다.
 
+### 근거 검토 결과 (2026-10-11)
+
+상태 전이와 피드·신고의 기존 구현 및 API 테스트에 실제 동작을 설명하는 `@evidence`를 연결했다. 별도 Evidence 경고는 20개에서 18개로 줄었다. 아래 근거를 연결한 뒤 새 격리 DB에서 HTTP 검사 44개를 통과했다.
+
+- 상태 전이: [WorkspaceProvider](../packages/backend/src/providers/workspaces/WorkspaceProvider.ts), [업무 상태·타이머 검사](../packages/backend/test/features/api/knittinglog/test_api_knittinglog_workspaces.ts).
+- 피드·신고: [CommunityProvider](../packages/backend/src/providers/community/CommunityProvider.ts), [ReportProvider](../packages/backend/src/providers/reports/ReportProvider.ts), [피드 검사](../packages/backend/test/features/api/knittinglog/test_api_knittinglog_feed.ts), [운영자 검사](../packages/backend/test/features/api/knittinglog/test_api_knittinglog_report_operator.ts).
+
+18개는 H2·H3 단위의 근거 연결 누락이다. 18개 기능이 모두 미구현이라는 뜻은 아니다. 일부 제목에는 구현한 조항과 미검증 조항이 함께 있다. 일부 정적 DB 근거는 현재 TypeScript 선택 범위 밖의 Prisma·SQL·검사 스크립트에 있다. 포괄 태그로 이 차이를 숨기지 않는다.
+
+| 남은 제목 | 유지 이유 |
+|---|---|
+| DB 표준, 4.1~4.6, 승인한 구조 설계 | 정적 설계·격리 DB 증거와 DDL 승인·운영 반영·실제 복구는 다른 범위이다. 전체 제목의 충족을 표시하지 않는다. |
+| 공통 규칙, 기능별 추적표, 나가기·추방 이관, 정책 분석 | ID별 수용 범위와 이관·공개 범위의 전체 경계를 보장하지 않는다. 중간 오류 주입과 UI 범위의 공백도 남아 있다. |
+| 확정 업무 정책, 6.1~6.3, 6.5 | 권한·타이머·인증의 통과 부분만으로 복구 도구·클라이언트 동작·전체 유출 비밀번호 공급자·운영 복원을 충족했다고 표시할 수 없다. |
+| API 버저닝 | 현재 v1과 오류 계약은 검사했다. 구버전 폐기 승인·이관 기록과 병행 버전 계약 수용은 현재 검사 범위가 아니다. |
+
+검사 범위와 `warning` 수준, 제외 태그 금지는 유지했다. 빌드의 경고 0개와 Evidence의 미충족 18개는 서로 다른 결과이다. 실행 결과와 운영 한계는 [구현 검증 기록](implementation-validation.md#도메인-구조-변경-후-통합-검사-2026-10-11)에 기록한다.
+
 ## Compiler Knowledge Graph
 
 프로젝트 전용 Codex 설정은 `.codex/config.toml`에 있다.

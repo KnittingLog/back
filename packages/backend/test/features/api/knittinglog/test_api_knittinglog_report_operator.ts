@@ -15,6 +15,9 @@ export async function test_api_knittinglog_report_operator_authority(connection:
 }
 
 // 확정 정책 6.4: 승인한 격리 운영자만 증거 불변과 조치 이력을 검증합니다.
+/**
+ * @evidence docs/requirements.md#64-피드신고 운영자가 신고를 검토·종결하고 조치 이력을 남기는지 검증한다.
+ */
 export async function test_api_knittinglog_report_operator_workflow(connection: K.Connection): Promise<void> {
   const token = process.env.KNITTINGLOG_TEST_OPERATOR_TOKEN;
   const operatorId = process.env.KNITTINGLOG_TEST_OPERATOR_USER_ID;

@@ -149,6 +149,9 @@ export namespace ReportProvider {
     });
   }
 
+  /**
+   * @evidence docs/requirements.md#64-피드신고 운영자 조치를 권한과 작업 식별자로 기록하고 신고 이력을 보존한다.
+   */
   export async function action(authorization: string | undefined, reportId: string, input: ActionInput): Promise<Action> {
     K.keys(input, ["operation_id", "action_code", "reason", "expected_status"]);
     if (!input.reason.trim()) K.fail(
@@ -189,6 +192,9 @@ export namespace ReportProvider {
     });
   }
 
+  /**
+   * @evidence docs/requirements.md#64-피드신고 허용된 신고 사유와 상세 입력을 검증하고 접수 당시 게시글 텍스트를 보존한다.
+   */
   export async function create(authorization: string | undefined, input: Input): Promise<Receipt> {
     K.keys(input, [
       "reason_code",

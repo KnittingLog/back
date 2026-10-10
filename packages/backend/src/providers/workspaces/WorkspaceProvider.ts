@@ -112,6 +112,9 @@ export namespace WorkspaceProvider {
     );
   }
 
+  /**
+   * @evidence docs/requirements.md#상태-전이 상태별 종료 시각을 맞추고 활성 타이머가 있으면 완료 전환을 거부한다.
+   */
   export function update(auth: string | undefined, id: string, input: Update): Promise<Workspace> {
     K.keys(input, ["status", "yarn_notes", "needle_notes"]);
     for (const value of [input.yarn_notes, input.needle_notes]) {

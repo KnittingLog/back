@@ -4,7 +4,10 @@ import typia from "typia";
 
 import { KnittingLogApi as K } from "../../../helpers/KnittingLogApi";
 
-// V1-408, DB-DS-001: 작업 상태와 종료 시각은 일치하며 완료 상태는 새 작업을 거부합니다.
+/**
+ * V1-408, DB-DS-001: 작업 상태와 종료 시각은 일치하며 완료 상태는 새 작업을 거부합니다.
+ * @evidence docs/requirements.md#상태-전이 상태 전환과 ended_at, 완료 상태의 신규 작업 거부를 검증한다.
+ */
 export async function test_api_knittinglog_workspace_state(connection: K.Connection): Promise<void> {
   const actor = await K.register(connection);
   const project = await K.project(actor);
