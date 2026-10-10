@@ -45,8 +45,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            node_modules/.cache/ttsc/plugins
-            node_modules/.cache/ttsc/go-build
+            .cache/ttsc/plugins
+            .cache/ttsc/go-build
           key: ${{ runner.os }}-${{ runner.arch }}-ttsc-v1-${{ hashFiles('pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-${{ runner.arch }}-ttsc-v1-
