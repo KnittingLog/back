@@ -5,7 +5,8 @@
 - 기능 기준은 [요구사항](requirements.md)입니다. 데이터 책임과 무결성 기준은 [테이블 설계](erd-design.md)입니다.
 - 사용자는 2026-10-10에 확정 요구사항을 기준으로 ERD를 먼저 변경하고 TDD로 업무 API를 구현하도록 요청했습니다.
 - 아래 경로·입력·HTTP 상태는 구현과 테스트가 함께 사용하는 계약입니다. 기능 정책은 요구사항 6절과 API 버저닝 7절을 따릅니다.
-- 테스트 계약의 타입은 [KnittingLogApi.ts](../packages/backend/test/helpers/KnittingLogApi.ts)에 있습니다. 업무 SDK가 생성되면 실제 계약과 대조합니다.
+- 테스트 계약의 타입은 [KnittingLogApi.ts](../packages/backend/test/helpers/KnittingLogApi.ts)에 있습니다. 업무 SDK를 생성했습니다. 생성된 계약과 실제 HTTP 호출을 대조합니다.
+- 내 프로젝트 참여 이력의 SDK 호출은 `api.functional.api.v1.users.me.memberships(connection)`입니다. 중복 컨트롤러를 제거하면서 기존 `memberships.memberships(connection)`과 `memberships.get(connection)`을 이 호출로 통합했습니다. HTTP 경로와 응답 필드는 유지합니다.
 - 테스트는 기존 Nestia DynamicExecutor를 사용합니다. Cypress와 새 테스트 의존성은 추가하지 않습니다.
 - 작성 방식은 ASD-STE100의 명료성 원칙을 참고합니다. 한국어 문서의 정식 표준 준수를 뜻하지 않습니다.
 
@@ -50,11 +51,26 @@ KNITTINGLOG_TEST_ALLOW_WRITES=1 pnpm -C packages/backend test:integration:isolat
 - 이미 사용 중인 `50801` 포트와 외부 `POSTGRES_URL`·`KNITTINGLOG_TEST_URL`·PostgreSQL service 설정은 실행 전에 거부합니다. 기존 서버를 중지하거나 다른 DB로 자동 전환하지 않습니다.
 - SQL 검사는 정확한 `expected_data_directory`와 `expected_port`, 명시한 쓰기 승인을 확인합니다. 경로 누락·경로 불일치·포트 불일치·승인 누락·승인 거부·Unix socket 접속의 6개 거부 조건도 검사합니다.
 - CHECK 34개, 부분 고유 인덱스 4개와 물리 FK 부재를 검사합니다. 검사 행을 모두 롤백한 뒤 업무 테이블이 비어 있는지 확인합니다.
-- 실행기는 테스트 전용 정책 2개를 생성하고 UTC·필수 재동의·실제 HTTP 44개 검사를 실행합니다. 일시정지 타이머 검사는 이 44개에 포함됩니다.
+- 실행기는 테스트 전용 정책 2개를 생성하고 UTC·필수 재동의·비밀번호 제공자 거부·이관 중간 실패·실제 HTTP 44개 검사를 실행합니다. 일시정지 타이머 검사는 이 44개에 포함됩니다.
+- [비밀번호 검사](../packages/backend/test/integration/password-screening.ts)는 제공자의 거부·장애가 HTTP 400·503을 반환하고 계정·동의·복구 코드·세션을 바꾸지 않는지 확인합니다. 이 단계의 제공자 응답은 주입합니다. 실제 제공자 검사는 아래 별도 명령으로 분리합니다.
+- [이관 롤백 검사](../packages/backend/test/integration/transfer-rollback.ts)는 새 DB에만 임시 실패 트리거를 설치합니다. 이관 이력 저장 전에 오류를 주입하고 11개 업무 테이블이 이전 상태인지 비교합니다. 트리거를 제거한 뒤 같은 명령 재시도·중복 방지와 댓글·반응·타이머 보존을 확인합니다.
+- 새 두 DB 검사는 `KNITTINGLOG_TEST_DATA_DIRECTORY`와 실제 서버의 경로·주소·포트·DB를 다시 비교합니다. 경로가 다른 두 실행의 거부와 업무 데이터 변경 부재도 실행기가 검사합니다. 운영 코드에는 실패 주입 훅을 추가하지 않습니다.
 - 성공과 실패 모두 새 클러스터를 종료합니다. 생성한 검사 데이터와 비밀값을 출력하지 않는 로그는 해당 임시 폴더에 보존합니다. 기존 `50799` 클러스터는 변경하지 않습니다.
 - 쓰기 승인값은 실행 명령에서 사용자가 전달합니다. CI가 이를 자동 설정하거나 통합 검사를 실행하도록 변경하지 않았습니다.
 
 기존 `50799` 대상을 직접 검사하는 경로는 유지합니다. 별도의 새 클러스터를 검사할 때만 `KNITTINGLOG_TEST_POSTGRES_PORT=50801`을 명시합니다. [접속 보호 검사](../packages/backend/test/unit/postgres-target.ts)는 일반 DB 포트와 URL 쿼리·앵커를 계속 거부합니다.
+
+### 유출 비밀번호 제공자 검사
+
+운영 모드의 신규 가입·비밀번호 복구는 [Pwned Passwords 범위 조회](https://haveibeenpwned.com/API/v3#PwnedPasswords)를 기본 검증 제공자로 사용합니다. 서버는 UTF-8 원문의 SHA-1 앞 5자리만 HTTPS로 보냅니다. 비밀번호 원문과 전체 해시는 보내지 않습니다. 저장 해시는 기존 scrypt를 유지합니다. 패딩을 요청하며 0건 패딩 행은 유출로 처리하지 않습니다.
+
+요청·본문 수신에는 5초 제한과 본문 256 KiB 제한을 적용합니다. 리다이렉트, HTTP 오류, 잘못된 본문, 수신 오류와 시간 초과는 허용으로 처리하지 않습니다. 업무 API는 검증 불가에 HTTP 503을 반환합니다. 로컬 모드는 외부 통신 없이 기존 로컬 목록을 사용합니다. 주입한 제공자의 장애는 로컬 모드에서도 거부합니다.
+
+DB 없는 CI 단위 검사는 외부 통신을 하지 않습니다. 실제 제공자의 수용 검사는 공개된 검사 문자열과 새 합성 문자열만 사용합니다. 운영 계정·사용자 비밀번호·환경 파일을 읽지 않습니다.
+
+```sh
+KNITTINGLOG_TEST_LIVE_PASSWORDS=1 pnpm -C packages/backend ttsx --project test/tsconfig.json test/integration/pwned-passwords-live.ts
+```
 
 ## 공통 HTTP 계약
 
@@ -88,7 +104,7 @@ KNITTINGLOG_TEST_ALLOW_WRITES=1 pnpm -C packages/backend test:integration:isolat
 | GET·PATCH·DELETE /users/me | 자신의 기본 정보 조회, 변경과 탈퇴를 수행합니다. |
 | GET /users/me/policy-consents | 가입 시 동의한 버전 식별자와 동의 시각을 반환합니다. |
 | POST /users/me/policy-consents | 현재 policy_document_ids에 재동의합니다. 동일 버전의 기존 동의 시각을 유지하고 Consent 배열을 반환합니다. |
-| GET /users/me/memberships | 자신의 종료한 참여 기간을 포함한 이력을 반환합니다. |
+| GET /users/me/memberships | AccountController가 자신의 현재·종료한 프로젝트 참여 기간을 반환합니다. created_at 내림차순으로 정렬하고 같은 시각이면 id 내림차순으로 정렬합니다. |
 | GET /users/me/records·statistics | 자신의 기록과 총 작업 시간을 반환합니다. |
 | GET /users?query=… | 공개 계정 ID로 사용자를 검색합니다. 차단 관계를 제외합니다. |
 | GET /users/:id | 공개 기본 정보를 반환합니다. |
@@ -207,14 +223,24 @@ KNITTINGLOG_TEST_ALLOW_WRITES=1 pnpm -C packages/backend test:integration:isolat
 | DB-DS-003 콘텐츠 복구·역이관 | 신고 운영자 인증과 콘텐츠 복구 승인은 다릅니다. 복구 승인·실행 API가 없습니다. 일반 사용자 복구 API를 임의로 만들지 않습니다. |
 | 운영자 화면·사용자 제재 | 이 작업은 제한된 운영자 API만 구현합니다. 화면과 계정 정지·자동 제재는 구현 범위가 아닙니다. |
 | 정책 본문 불변·파일 복구 | 정책 운영 조회와 파일 API가 없습니다. 작성 응답만으로 보존을 검증하지 않습니다. |
-| 이관 중간 단계 실패의 실제 롤백 | 결정적인 오류 주입 수단과 격리 DB 검증이 필요합니다. 입력 거부 테스트를 중간 실패 롤백 증거로 대체하지 않습니다. |
+| 이관의 전체 실패 지점·파일 경계 | 이관 이력 저장 직전의 오류 주입과 11개 테이블 롤백은 통과했습니다. 다른 실패 지점과 파일 저장소의 원자성은 별도 검증이 필요합니다. |
 | 실제 백업 복원 | API 응답과 DB 제약 검사만으로 백업의 동작을 증명하지 않습니다. 별도 복원 검증이 필요합니다. |
 
 DB CHECK와 부분 고유 인덱스는 별도의 실제 PostgreSQL 통합 검사로 통과했습니다. 실행 대상과 롤백 결과는 [구현 검증 기록](implementation-validation.md)에 있습니다. HTTP 테스트의 증거와 구분합니다.
 
 ## 현재 증거
 
-2026-10-10 확인 결과:
+2026-10-11의 로컬 `develop` 기준으로 다음 결과를 확인했습니다. 세부 로그와 실행 대상은 [최근 검증 기록](implementation-validation.md#내-참여-이력-조회-통합-2026-10-11)이 소유합니다.
+
+- 실제 HTTP 검사 44개가 통과했습니다. 실패와 BLOCKED는 0개입니다. 재가입·나가기 후 현재·종료한 자신의 참여 기간과 최신순 정렬을 포함합니다.
+- DB 없는 단위 검사 8개 파일이 통과했습니다. 단일 AccountController 등록과 생성 SDK의 내 참여 이력 호출을 포함합니다. 이 단위 검사의 인증·DB는 모의 구현입니다.
+- 새 격리 DB에서 보호 조건 8개, DB 제약, 비밀번호 거부·장애와 이관 중간 실패 검사가 통과했습니다. 서버 종료를 확인했습니다.
+- lint·빌드는 통과했습니다. 별도 Evidence·전체 테스트 타입 검사는 종료 0이고 근거 연결 경고 16개가 남아 있습니다. 빌드 성능 경고 1개도 남아 있습니다.
+- 업무 SDK의 최신 tarball·외부 클라이언트·실기기·운영 복구는 이번 검사의 범위가 아닙니다. 코드 게시 결과는 Git 이력과 원격 브랜치로 확인합니다. 게시 성공은 원격 CI나 운영 수용의 성공을 뜻하지 않습니다.
+
+## 초기 TDD 검증 이력 (2026-10-10)
+
+아래는 당시의 실패와 수정 기록입니다. 현재 결과는 위 절을 기준으로 합니다.
 
 - 기존 API 테스트 9개 파일의 테스트 함수 40개를 보존했습니다. 작성자 표시·운영 신고·일시정지 타이머 검증을 추가해 현재 10개 파일에 테스트 함수 44개가 있습니다. 함수 이름의 중복이 없고 모든 함수가 위 추적 표에 있습니다.
 - API 테스트와 도우미·진입점만 포함한 임시 설정으로 타입 검사와 컴파일을 통과했습니다. 생성한 JavaScript에 typia 응답 검증 함수가 포함됩니다.

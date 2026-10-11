@@ -50,21 +50,24 @@ pnpm check:evidence
 
 ### 근거 검토 결과 (2026-10-11)
 
-상태 전이와 피드·신고의 기존 구현 및 API 테스트에 실제 동작을 설명하는 `@evidence`를 연결했다. 별도 Evidence 경고는 20개에서 18개로 줄었다. 아래 근거를 연결한 뒤 새 격리 DB에서 HTTP 검사 44개를 통과했다.
+상태 전이와 피드·신고의 기존 구현 및 API 테스트에 실제 동작을 설명하는 `@evidence`를 연결해 경고를 20개에서 18개로 줄였다. 이후 DB 적용 범위와 네이밍의 실행 근거를 연결해 16개로 줄였다. 검사 수준과 제외 범위는 바꾸지 않았다.
 
 - 상태 전이: [WorkspaceProvider](../packages/backend/src/providers/workspaces/WorkspaceProvider.ts), [업무 상태·타이머 검사](../packages/backend/test/features/api/knittinglog/test_api_knittinglog_workspaces.ts).
 - 피드·신고: [CommunityProvider](../packages/backend/src/providers/community/CommunityProvider.ts), [ReportProvider](../packages/backend/src/providers/reports/ReportProvider.ts), [피드 검사](../packages/backend/test/features/api/knittinglog/test_api_knittinglog_feed.ts), [운영자 검사](../packages/backend/test/features/api/knittinglog/test_api_knittinglog_report_operator.ts).
+- DB 적용 범위·네이밍: [ERD 저장 계약 검사](../packages/backend/test/unit/erd-contract.ts)가 기존 DMMF·생성 SQL 검사를 직접 실행한다. 이 검사는 실제 DB 연결과 운영 DDL 승인을 대신하지 않는다.
 
-18개는 H2·H3 단위의 근거 연결 누락이다. 18개 기능이 모두 미구현이라는 뜻은 아니다. 일부 제목에는 구현한 조항과 미검증 조항이 함께 있다. 일부 정적 DB 근거는 현재 TypeScript 선택 범위 밖의 Prisma·SQL·검사 스크립트에 있다. 포괄 태그로 이 차이를 숨기지 않는다.
+16개는 H2·H3 단위의 근거 연결 누락이다. 16개 기능이 모두 미구현이라는 뜻은 아니다. 일부 제목에는 구현한 조항과 미검증 조항이 함께 있다. 포괄 태그나 미충족 상태표의 인용만으로 경고를 없애지 않는다. 사용자는 상태표가 아니라 실제 미충족 사항의 해소를 요청했다.
+
+이번 보완에서 [이관 중간 실패 검사](../packages/backend/test/integration/transfer-rollback.ts)와 [유출 비밀번호 구현](../packages/backend/src/providers/auth/Security.ts)을 추가했다. 실제 새 PostgreSQL에서 이관 실패의 전체 롤백·같은 명령 재시도와 비밀번호 거부·장애의 HTTP/DB 검사를 통과했다. 실제 유출 비밀번호 제공자도 합성 문자열로 검사했다. 이 결과를 해당 제목 전체의 수용으로 확대하지 않는다.
 
 | 남은 제목 | 유지 이유 |
 |---|---|
-| DB 표준, 4.1~4.6, 승인한 구조 설계 | 정적 설계·격리 DB 증거와 DDL 승인·운영 반영·실제 복구는 다른 범위이다. 전체 제목의 충족을 표시하지 않는다. |
-| 공통 규칙, 기능별 추적표, 나가기·추방 이관, 정책 분석 | ID별 수용 범위와 이관·공개 범위의 전체 경계를 보장하지 않는다. 중간 오류 주입과 UI 범위의 공백도 남아 있다. |
-| 확정 업무 정책, 6.1~6.3, 6.5 | 권한·타이머·인증의 통과 부분만으로 복구 도구·클라이언트 동작·전체 유출 비밀번호 공급자·운영 복원을 충족했다고 표시할 수 없다. |
+| DB 표준, 4.3~4.6, 승인한 구조 설계 | 정적 설계·격리 DB 증거와 DDL 승인·운영 반영·실제 복구는 다른 범위이다. 모든 쓰기 경로·논리 관계의 수용도 전체 제목 단위로 완료 표시하지 않는다. |
+| 공통 규칙, 기능별 추적표, 나가기·추방 이관, 정책 분석 | 이관 중간 실패 검사는 보완했다. ID별 수용 범위와 이관·공개 범위의 전체 경계, UI·사진 처리는 아직 전체 검증 근거가 없다. |
+| 확정 업무 정책, 6.1~6.3, 6.5 | 권한·타이머·인증과 유출 비밀번호 검사를 통과했다. 복구·역이관 도구, 보존 조건에 따른 물리삭제, 클라이언트 동작과 운영 복원의 전체 수용은 남아 있다. |
 | API 버저닝 | 현재 v1과 오류 계약은 검사했다. 구버전 폐기 승인·이관 기록과 병행 버전 계약 수용은 현재 검사 범위가 아니다. |
 
-검사 범위와 `warning` 수준, 제외 태그 금지는 유지했다. 빌드의 경고 0개와 Evidence의 미충족 18개는 서로 다른 결과이다. 실행 결과와 운영 한계는 [구현 검증 기록](implementation-validation.md#도메인-구조-변경-후-통합-검사-2026-10-11)에 기록한다.
+검사 범위와 `warning` 수준, 제외 태그 금지는 유지했다. 빌드 경고와 Evidence의 근거 누락 16개는 서로 다른 결과이다. 실행 결과와 운영 한계는 [미충족 항목 보완 기록](implementation-validation.md#미충족-항목-보완-2026-10-11)에 기록한다. 이후 [내 참여 이력 조회 통합](implementation-validation.md#내-참여-이력-조회-통합-2026-10-11)에서도 16개 경고를 확인했다. 중복 경로 제거와 SDK 호출 검증만으로 API 버저닝 제목 전체의 수용을 주장하지 않는다.
 
 ## Compiler Knowledge Graph
 

@@ -1,5 +1,7 @@
 # 구현 검증 기록
 
+이 문서는 시점별 실행 기록이다. 과거의 미구현·미검증 항목이 최근 보완에서 바뀔 수 있다. 현재 적용 내용과 추가 작업은 [구현 현황과 추가 작업 명세](implementation-status.md)를 먼저 확인한다.
+
 ## 기준과 실행 대상
 
 - 검증일은 2026-10-10입니다. 실행 모드는 `LOCAL_ONLY`이고 호스트는 `luke-choiui-MacBookAir.local`입니다.
@@ -172,3 +174,103 @@ Evidence의 18개 제목은 여전히 전체 근거가 없다. 일부 구현·�
 ### 후속 Git 게시 승인
 
 사용자는 검증 후 변경사항의 의미 단위 commit과 push를 명시적으로 요청했다. 게시 대상은 `origin`의 `https://github.com/KnittingLog/back`, 브랜치는 `develop`이다. 운영 DB 반영·배포와 머지는 이번 승인 범위가 아니다. 현재 build workflow는 `main` push와 pull request를 대상으로 하므로 `develop` push만으로 원격 CI 통과를 주장하지 않는다.
+
+## 미충족 항목 보완 (2026-10-11)
+
+### 범위와 결과
+
+- 사용자는 경고만 없애는 상태표가 아니라 실제 미충족 사항의 해소를 요청했다. 검사 제외, 경고 수준 변경과 포괄 태그는 사용하지 않았다. 이번 보완으로 요구사항 전체를 완료했다고 표시하지 않는다.
+- 실행 모드는 `LOCAL_ONLY`이고 호스트는 `luke-choiui-MacBookAir.local`이다. 기준 커밋은 `develop`의 `51fd38b`이다. 이 보완은 아직 commit·push하지 않았다. 기존 환경 파일·운영 DB·배포 설정은 변경하지 않았다.
+- [비밀번호 보안 구현](../packages/backend/src/providers/auth/Security.ts)은 운영 모드에서 실제 Pwned Passwords 제공자를 기본으로 사용한다. 원문과 전체 해시를 전송하지 않는다. 제공자 오류·시간 초과·잘못된 본문은 비밀번호 허용으로 처리하지 않는다. 저장은 기존 scrypt를 유지한다.
+- [제공자 단위 검사](../packages/backend/test/unit/pwned-passwords.ts)는 패딩·정확한 접미 해시 비교·응답 한도·시간 초과·오류 시 차단을 확인했다. 기본 운영 검증 연결도 모의 전송으로 확인했다. 로컬 모드는 외부 통신 없이 기존 목록을 유지한다.
+- [실제 제공자 검사](../packages/backend/test/integration/pwned-passwords-live.ts)는 공개 문자열 `password`의 거부와 새 합성 문자열의 허용을 확인했다. 사용자 비밀번호나 실제 계정은 사용하지 않았다. 실제 제공자는 로컬 DB 통합 검사와 DB 없는 CI에서 자동 호출하지 않는다.
+- [비밀번호 HTTP/DB 검사](../packages/backend/test/integration/password-screening.ts)는 제공자 거부·장애의 HTTP 400·503과 5개 계정 관련 테이블의 변경 부재를 확인했다. 거부한 복구 요청은 복구 코드를 소비하지 않았다. 이후 성공한 복구는 과거 접근·갱신 토큰과 소비한 복구 코드를 거부했다. 이 단계의 제공자 응답은 주입했다.
+- [이관 중간 실패 검사](../packages/backend/test/integration/transfer-rollback.ts)는 새 DB에 임시 트리거를 설치했다. 방장 양도·개인 프로젝트·멤버십·작업 공간·대기 초대가 변경된 뒤 이관 이력 저장 직전에 오류를 발생시켰다. 11개 업무 테이블이 실패 전과 같은지 확인했다. 임시 트리거를 제거한 뒤 같은 명령 재시도·중복 방지와 댓글·반응·타이머 보존을 확인했다.
+- [ERD 저장 계약 검사](../packages/backend/test/unit/erd-contract.ts)는 기존 DMMF·생성 SQL 검사를 실제로 실행한다. DB 적용 범위와 네이밍의 근거를 연결했다. Evidence 경고는 18개에서 16개로 줄었다. SQL 생성은 실제 DB 반영이 아니다.
+
+| 검사 | 결과 |
+|---|---|
+| 전체 lint | 종료 0 |
+| 전체 단위 검사 | 기존 5개와 신규 2개 파일 모두 통과 |
+| 전체 빌드 | 종료 0. Rolldown `PLUGIN_TIMINGS` 성능 경고 1개 발생. 변환 콜백의 4.9초 소요를 보고했다. 경고를 숨기는 설정은 추가하지 않았다. |
+| Evidence·전체 테스트 타입 | 종료 0. `TS16411` 근거 누락 경고 16개 유지 |
+| ERD 저장 계약 | 27개 모델·47개 논리 관계·CHECK 34개·부분 고유 인덱스 4개·물리 FK 0개 통과 |
+| 실제 유출 비밀번호 제공자 | 합성 문자열로 실제 HTTPS 검사 통과 |
+| 새 격리 PostgreSQL 검사 | 기존 SQL 보호 조건 6개와 새 통합 검사 경로 보호 조건 2개 통과. 보호 검사 뒤 업무 데이터 변경 부재 확인 |
+| 새 HTTP/DB 수용 | 비밀번호 거부·장애와 이관 중간 실패 검사 통과. 기존 HTTP 44개는 실패 0개·BLOCKED 0개 |
+
+최종 새 클러스터 경로는 `/private/tmp/knittinglog-tdd.GsXOlS/postgres`이다. 주소는 `127.0.0.1:50801`이고 DB는 `knittinglog_tdd`이다. 새 두 통합 검사는 URL 검증 뒤 실제 서버의 정확한 경로·주소·포트·DB를 확인하고 쓰기를 시작한다. 기존 클러스터는 재사용하거나 중지하지 않았다. 최종 단계별 기록과 로그는 `/private/tmp/knittinglog-tdd.GsXOlS`에 보존했다. 새 서버의 종료를 확인한다.
+
+검증 명령은 다음과 같다.
+
+```sh
+pnpm lint
+pnpm check:evidence
+pnpm build
+KNITTINGLOG_TEST_LIVE_PASSWORDS=1 pnpm -C packages/backend ttsx --project test/tsconfig.json test/integration/pwned-passwords-live.ts
+KNITTINGLOG_TEST_ALLOW_WRITES=1 pnpm -C packages/backend test:integration:isolated
+```
+
+빌드에는 접속 불가한 합성 CI DB 설정을 명령 환경으로 전달했다. 단위 검사는 CI와 같은 `test/unit/*.ts` 범위를 실행했다. 제공자 구현 전에는 새 회귀 검사가 `TS2339`로 실패했고 구현 후에는 통과했다. 통합 검사 준비 중의 잘못된 요청 경로·SQL 문법 실패는 업무 구현의 RED로 계산하지 않는다.
+
+### 남은 실제 작업
+
+- 콘텐츠 복구·역이관 실행 도구와 그 승인 대상·버전·보존 기간·권한·원자성 검증은 남아 있다. 물리삭제와 파일 제거도 전체 보존 조건의 검증이 필요하다.
+- 파일 업로드·보존·복원에는 승인한 저장소와 실행 대상이 필요하다. 실제 DB·파일 복원, RPO·RTO 측정과 복원 후 탈퇴·차단·인증 대조를 완료하지 않았다.
+- 클라이언트의 타이머·카운터 재시도·저장 표시와 사진 처리는 해당 저장소에서 구현·검증해야 한다. 현재 요청에는 클라이언트 저장소 경로가 제공되지 않았다.
+- 실제 DDL 승인·운영 반영과 구버전 폐기 승인은 빌드나 로컬 검사로 대신하지 않는다. 다중 인스턴스와 부하 수용도 이번 검사에 포함하지 않았다.
+- 기존 멤버십 중복 경로는 변경하지 않았다. [Evidence 검토 결과](ttsc-graphs.md#근거-검토-결과-2026-10-11)의 나머지 제목을 충족했다고 주장하지 않는다.
+
+## 내 참여 이력 조회 통합 (2026-10-11)
+
+### 변경 범위
+
+- 사용자는 내 참여 이력 조회를 AccountController에 유지하고 MembershipHistoryController를 삭제하도록 결정했다. 실행 모드는 `LOCAL_ONLY`이다.
+- [AccountController](../packages/backend/src/controllers/accounts/v1/AccountController.ts)의 `GET /api/v1/users/me/memberships`를 유지했다. 중복 컨트롤러와 모듈 등록을 제거했다. 호출자가 없어진 ProjectProvider.history도 제거했다. 프로젝트별 현재 참여자 조회는 유지했다.
+- [AccountProvider](../packages/backend/src/providers/accounts/AccountProvider.ts)는 자신의 현재·종료한 프로젝트 참여 기간을 조회한다. 기존 `created_at DESC, id DESC` 정렬과 응답 필드를 유지했다. 계정 데이터와 프로젝트 멤버십의 저장 경계는 변경하지 않았다.
+- SDK를 재생성했다. 호출은 `api.functional.api.v1.users.me.memberships(connection)`으로 통합했다. 기존 `memberships.memberships(connection)`과 `memberships.get(connection)`을 사용하는 클라이언트는 수정해야 한다. HTTP URL은 변경하지 않았다.
+- OpenAPI의 내 참여 이력 조회 담당은 AccountController이고 응답 타입은 AccountProvider.Membership이다. 기존 ProjectProvider.Membership과 응답 스키마의 구조는 같다. 변경 전 생성 기준본과 비교한 결과, 이 경로 외의 OpenAPI 경로 객체와 전체 경로·메서드 목록은 같았다.
+
+### 검증 결과
+
+| 검사 | 결과 |
+|---|---|
+| 단일 처리기 RED/GREEN | 변경 전 처리기 수 2로 실패했다. 변경 후 처리기 수 1과 AccountController 소유를 확인했다. |
+| 조회·SDK 회귀 | 사용자 범위, 최신순 조회 조건, 종료 이력의 날짜 변환, 실제 loopback HTTP와 생성 SDK 호출 통과. 이 검사의 인증·DB는 모의 구현이다. |
+| 실제 참여 이력 HTTP/DB | 재가입·나가기 후 자신의 현재·종료 이력 4개와 종료 이력의 최신순을 확인했다. 기존 프로젝트별 현재 참여자 검사도 통과했다. |
+| 전체 lint·빌드 | 종료 0. 빌드의 `PLUGIN_TIMINGS` 성능 경고 1개는 유지됐다. 변환 콜백 4.9초를 보고했다. |
+| DB 없는 단위 검사 | 8개 파일 모두 통과 |
+| 전체 테스트 타입·Evidence | 종료 0. 근거 누락 `TS16411` 경고 16개 유지 |
+| 새 격리 DB 통합 | 보호 조건 8개, SQL 제약·롤백, UTC·정책, 비밀번호 거부·장애, 이관 중간 실패 검사 통과 |
+| 실제 업무 HTTP 전체 | 44개 통과. 실패 0개. BLOCKED 0개 |
+| 변경 검사 | `git diff --check` 통과. 삭제한 컨트롤러·Provider 함수·SDK 중첩 호출의 코드 참조 없음 |
+
+새 DB의 경로는 `/private/tmp/knittinglog-tdd.47PawZ/postgres`이다. 주소는 `127.0.0.1:50801`이고 DB는 `knittinglog_tdd`이다. 단계별 로그와 `results.json`은 같은 임시 폴더에 보존했다. 종료 단계의 코드는 0이다. 이후 `pg_ctl status`의 `no server running`도 확인했다. 기존 DB는 변경하지 않았다.
+
+검증 명령은 다음과 같다. 빌드에는 접속 불가한 합성 CI DB 설정을 전달했다.
+
+```sh
+pnpm -C packages/backend build:sdk
+pnpm lint
+pnpm check:evidence
+pnpm build
+# 저장소 루트에서 단위 검사를 실행합니다.
+for test in packages/backend/test/unit/*.ts; do pnpm -C packages/backend ttsx --project test/tsconfig.json "test/unit/${test##*/}" || exit; done
+KNITTINGLOG_TEST_ALLOW_WRITES=1 pnpm -C packages/backend test:integration:isolated
+git diff --check
+```
+
+이번 변경은 중복 라우팅의 책임과 정렬 계약을 해결했다. 미래 병행 버전, 외부 클라이언트 이관과 나머지 요구사항의 수용은 별도이다. 기존 미게시 변경을 보존했다. commit·push·운영 DB 반영·배포는 수행하지 않았다.
+
+## 문서 최신화 (2026-10-11)
+
+- README, 구현 현황, API 테스트 계약, SDK 절차와 SDK 패키지 안내를 현재 코드에 맞췄다. 초기 기반 코드·샘플 SDK 검증 기록은 과거 이력으로 구분했다. 로컬 도메인 분리 계획의 목표 구조와 최신 반영 상태도 갱신했다.
+- AccountController의 단일 참여 이력 조회, 새 SDK 호출, 단위 검사 8개와 HTTP 검사 44개를 반영했다. 이관 이력 저장 직전 실패의 롤백 검증과 다른 실패 지점의 미검증을 구분했다.
+- 문서 10개의 코드 블록 닫힘과 로컬 링크·제목 앵커 155개를 검사했다. TypeScript AST로 업무 컨트롤러 15개·HTTP 테스트 함수 44개·단일 SDK 함수를 확인했다. 단위 검사 파일 8개와 요구사항 기능 ID 64개도 확인했다. 최근 격리 API 검사와 서버 종료의 기록을 대조했다. `git diff --check`를 통과했다.
+- 이번 작업은 문서만 변경했다. 빌드·업무 테스트·pack·외부 소비자 검사를 다시 실행하지 않았다. 앞선 실행의 성공을 이번 실행으로 기록하지 않았다. 원격 조회·commit·push·배포도 수행하지 않았다.
+
+## 후속 요청: 의미 단위 게시 (2026-10-11)
+
+사용자는 위 로컬 보완과 문서 최신화의 의미 단위 commit과 push를 승인했다. 대상은 `https://github.com/KnittingLog/back`의 `origin/develop`이다. 유출 비밀번호 검증, 격리 통합 검사, ERD 근거 검사, 참여 이력 중복 제거와 문서 최신화를 별도 커밋으로 분리한다. 운영 DB 반영·배포·서비스 재개·머지는 승인 범위가 아니다. 게시 결과는 Git 이력과 원격 브랜치로 확인한다. 로컬 검사와 원격 CI 결과는 구분한다.
+
+게시 전에 lint와 단위 검사 8개 파일을 다시 실행해 통과했다. 전체 테스트 타입·Evidence 검사는 종료 0이고 근거 연결 경고 16개가 남았다. 변경 파일에서 대표적인 비밀키·접근 토큰 형식을 검사했으며 탐지 항목은 없었다. 이 형식 검사는 모든 비밀값의 부재를 증명하지 않는다. 기존 빌드와 격리 DB·HTTP 44개 검사 결과는 위 실행 기록을 사용한다. 원격 develop을 조회해 게시 시작 전 기준 커밋과 같은지 확인했다.
