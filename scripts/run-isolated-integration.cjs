@@ -41,6 +41,7 @@ async function main() {
     POSTGRES_SCHEMA: "public", POSTGRES_USERNAME: user, POSTGRES_USERNAME_READONLY: user,
     POSTGRES_PASSWORD: "isolated-test-only-placeholder", KNITTINGLOG_TEST_ALLOW_WRITES: "1",
     KNITTINGLOG_TEST_POSTGRES_PORT: String(port),
+    KNITTINGLOG_TEST_DATA_DIRECTORY: data,
     PGCONNECT_TIMEOUT: "5", TTSC_CACHE_DIR: path.join(root, ".cache/ttsc"),
   });
   const results = [];
@@ -122,8 +123,27 @@ async function main() {
       '00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000001'
       FROM unnest(ARRAY['terms','privacy']) AS code;`, ["--single-transaction"]);
     for (const [label, file] of [
+      ["guard-password-screening-directory", "test/integration/password-screening.ts"],
+      ["guard-transfer-rollback-directory", "test/integration/transfer-rollback.ts"],
+    ]) {
+      const output = await run(label, process.execPath, [path.join(root, "scripts/ttsc-cache.cjs"), "ttsx", "--project", "test/tsconfig.json", file], {
+        env: { ...env, KNITTINGLOG_TEST_DATA_DIRECTORY: "/private/tmp/knittinglog-tdd.invalid/postgres" }, codes: [1],
+      });
+      assert.match(output, /FAIL 격리/);
+    }
+    await psql("integration-guard-no-writes", database, `DO $$ DECLARE v_table record; v_count bigint; BEGIN
+      FOR v_table IN SELECT schemaname, tablename FROM pg_tables
+        WHERE schemaname IN ('accounts','social','projects','community') LOOP
+        EXECUTE format('SELECT count(*) FROM %I.%I', v_table.schemaname, v_table.tablename) INTO v_count;
+        IF v_count <> (CASE WHEN v_table.tablename = 'policy_documents' THEN 2 ELSE 0 END)
+          THEN RAISE EXCEPTION '통합 검사 보호 조건이 업무 데이터를 변경했습니다'; END IF;
+      END LOOP;
+    END $$;`);
+    for (const [label, file] of [
       ["postgres-time", "test/integration/postgres-time.ts"],
       ["policy-gates", "test/integration/policy-gates.ts"],
+      ["password-screening", "test/integration/password-screening.ts"],
+      ["transfer-rollback", "test/integration/transfer-rollback.ts"],
       ["isolated-api", "test/isolated-api.ts"],
     ]) {
       const output = await run(label, process.execPath, [path.join(root, "scripts/ttsc-cache.cjs"), "ttsx", "--project", "test/tsconfig.json", file]);
