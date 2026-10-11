@@ -12,7 +12,7 @@ export namespace Security {
     return value;
   }
 
-  // 초기 로컬 차단 목록입니다. 전체 유출 목록 제공자의 수용 검증은 별도입니다.
+  // 로컬 기본 차단 목록입니다. 운영 모드는 유출 비밀번호 제공자도 검사합니다.
   const prohibited = new Set([
     "password",
     "passwordpassword",
@@ -33,7 +33,51 @@ export namespace Security {
 
   export type PasswordVerifier = (password: string) => Promise<"safe" | "breached" | "unavailable">;
   export class ScreeningUnavailable extends Error {}
-  export async function screenPassword(value: string, production: boolean, verifier?: PasswordVerifier): Promise<string> {
+  export async function pwnedPassword(value: string, request: typeof fetch = fetch): ReturnType<PasswordVerifier> {
+    // SHA-1은 제공자 조회에만 사용합니다. 비밀번호 저장에는 scrypt를 유지합니다.
+    const hash = createHash("sha1").update(value, "utf8").digest("hex").toUpperCase();
+    try {
+      const response = await request(`https://api.pwnedpasswords.com/range/${hash.slice(0, 5)}`, {
+        headers: { "Add-Padding": "true", "User-Agent": "KnittingLog-password-screening" },
+        redirect: "error", signal: AbortSignal.timeout(5_000),
+      });
+      if (response.status !== 200 || !response.body) {
+        await response.body?.cancel();
+        return "unavailable";
+      }
+      const reader = response.body.getReader();
+      const chunks: Uint8Array[] = [];
+      let size = 0;
+      try {
+        for (;;) {
+          const { value: chunk, done } = await reader.read();
+          if (done) break;
+          size += chunk.byteLength;
+          if (size > 256 * 1024) {
+            await reader.cancel();
+            return "unavailable";
+          }
+          chunks.push(chunk);
+        }
+      } finally {
+        reader.releaseLock();
+      }
+      const lines = Buffer.concat(chunks).toString("utf8").split(/\r?\n/);
+      if (lines[lines.length - 1] === "") lines.pop();
+      if (!lines.length) return "unavailable";
+      let breached = false;
+      for (const line of lines) {
+        const row = /^([A-F0-9]{35}):([0-9]+)$/.exec(line);
+        if (!row || !Number.isSafeInteger(Number(row[2]))) return "unavailable";
+        if (row[1] === hash.slice(5) && Number(row[2]) > 0) breached = true;
+      }
+      return breached ? "breached" : "safe";
+    } catch {
+      return "unavailable";
+    }
+  }
+
+  export async function screenPassword(value: string, production: boolean, verifier: PasswordVerifier | undefined = production ? pwnedPassword : undefined): Promise<string> {
     password(value);
     if (!verifier) {
       if (production) throw new ScreeningUnavailable(

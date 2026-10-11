@@ -10,7 +10,7 @@ async function main(): Promise<void> {
   assert.equal(Security.password(password), password);
   for (const input of ["short", "passwordpassword", "a".repeat(129)])
     assert.throws(() => Security.password(input));
-  await assert.rejects(Security.screenPassword(password, true), Security.ScreeningUnavailable);
+  await assert.rejects(Security.screenPassword(password, true, async () => "unavailable"), Security.ScreeningUnavailable);
   await assert.rejects(Security.screenPassword(password, true, async () => "breached"));
   await assert.rejects(Security.screenPassword(password, false, async () => "unavailable"), Security.ScreeningUnavailable);
   assert.equal(await Security.screenPassword(password, true, async () => "safe"), password);
