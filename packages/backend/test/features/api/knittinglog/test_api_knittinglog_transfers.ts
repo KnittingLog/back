@@ -116,9 +116,12 @@ export async function test_api_knittinglog_rejoin_and_leave(connection: K.Connec
   }), K.invalidResponse);
   assert.notEqual(second.to_project_id, first.to_project_id);
   const history = typia.assert<K.Membership[]>(await K.request(member.connection, "GET", "/users/me/memberships", 200), K.invalidResponse);
+  assert.equal(history.length, 4, "현재 참여와 종료한 참여 기간을 모두 반환합니다.");
+  assert.ok(history.every((entry) => entry.user_id === member.session.user.id), "자신의 참여 이력만 반환합니다.");
   const ended = history.filter((entry) => entry.project_id === project.id);
   assert.deepEqual(ended.map((entry) => entry.id).sort((a, b) => a.localeCompare(b)), [membership.id, joined.id].sort((a, b) => a.localeCompare(b)));
   assert.ok(ended.every((entry) => entry.left_at !== null));
+  assert.deepEqual(ended.map((entry) => entry.id), [joined.id, membership.id], "종료한 참여 이력도 최신 참여부터 반환합니다.");
   const active = typia.assert<K.Membership[]>(await K.request(owner.connection, "GET", `/projects/${project.id}/memberships`, 200), K.invalidResponse);
   assert.ok(!active.some((entry) => entry.user_id === member.session.user.id));
 }

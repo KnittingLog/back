@@ -288,15 +288,6 @@ export namespace ProjectProvider {
     });
   }
 
-  export async function history(authorization: string | undefined): Promise<Membership[]> {
-    return K.transaction(async (tx) => {
-      const actorId = await verified(tx, authorization);
-      return (await tx.project_memberships.findMany({ where: { user_id: actorId }, orderBy: [{ created_at: "asc" }, { id: "asc" }] })).map(
-        membership,
-      );
-    });
-  }
-
   export async function workspaces(authorization: string | undefined, id: string): Promise<Workspace[]> {
     return K.transaction(async (tx) => {
       const actorId = await verified(tx, authorization);

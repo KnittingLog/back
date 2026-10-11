@@ -6,7 +6,6 @@ import { CommunityController } from "./community/v1/CommunityController";
 import { PolicyController } from "./policies/v1/PolicyController";
 import { ProjectController } from "./projects/v1/ProjectController";
 import { ProjectInvitationController } from "./projects/v1/ProjectInvitationController";
-import { MembershipHistoryController } from "./projects/v1/MembershipHistoryController";
 import { RecordController } from "./records/v1/RecordController";
 import { RecordCommentController } from "./records/v1/RecordCommentController";
 import { ReportController } from "./reports/v1/ReportController";
@@ -24,7 +23,6 @@ import { CounterController } from "./workspaces/v1/CounterController";
     PolicyController,
     ProjectController,
     ProjectInvitationController,
-    MembershipHistoryController,
     FriendRequestController,
     FriendController,
     BlockController,
