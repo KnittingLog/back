@@ -32,6 +32,16 @@ export class KnittingLogExceptionFilter implements ExceptionFilter {
             ? "대상을 찾을 수 없습니다."
             : message;
       }
+    } else if (exception instanceof Error && "type" in exception && "status" in exception &&
+      exception.type === "entity.too.large" && exception.status === 413) {
+      status = 413;
+      code = "PAYLOAD_TOO_LARGE";
+      message = "요청 본문의 허용 크기를 초과했습니다.";
+    } else if (exception instanceof Error && "type" in exception && "status" in exception &&
+      exception.type === "entity.parse.failed" && exception.status === 400) {
+      status = 400;
+      code = "INVALID_INPUT";
+      message = "입력 형식이 올바르지 않습니다.";
     } else if (exception instanceof Prisma.PrismaClientKnownRequestError) {
       if (exception.code === "P2002" || exception.code === "P2034") {
         status = 409;

@@ -67,6 +67,7 @@ export namespace KnittingLogContext {
       handle: user.deleted_at ? "" : (user.handle ?? ""),
       nickname: user.deleted_at ? "탈퇴한 사용자" : (user.nickname ?? ""),
       biography: user.deleted_at ? null : user.biography,
+      profile_photo_object_id: user.deleted_at ? null : user.profile_photo_object_id,
       visibility: user.visibility,
     };
   }

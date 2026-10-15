@@ -5,3 +5,4 @@
  */
 //================================================================
 export * as reports from "./reports/index";
+export * as maintenance from "./maintenance/index";

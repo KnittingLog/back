@@ -12,8 +12,8 @@ const graph: ITtscEvidenceGraphConfig = {
       files: [
         "src/controllers/KnittingLogModule.ts",
         "src/controllers/common/KnittingLogExceptionFilter.ts",
-        "src/controllers/{auth,accounts,policies,social,projects,workspaces,records,community,reports}/v1/**/*.ts",
-        "src/providers/{auth,accounts,policies,social,projects,workspaces,records,community,reports}/**/*.ts",
+        "src/controllers/{auth,accounts,policies,social,projects,workspaces,records,community,reports,maintenance,storage}/v1/**/*.ts",
+        "src/providers/{auth,accounts,policies,social,projects,workspaces,records,community,reports,maintenance,storage}/**/*.ts",
         "src/providers/common/KnittingLogContext.ts",
         "test/features/api/knittinglog/**/*.ts",
         "test/unit/**/*.ts",

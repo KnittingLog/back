@@ -1,4 +1,5 @@
 import type { users } from "@prisma/sdk";
+import type { tags } from "typia";
 
 import { AuthProvider } from "../auth/AuthProvider";
 import { KnittingLogContext as K } from "../common/KnittingLogContext";
@@ -10,6 +11,7 @@ export namespace AccountProvider {
     nickname?: string;
     biography?: string | null;
     visibility?: "public" | "friends" | "private";
+    profile_photo_object_id?: (string & tags.Format<"uuid">) | null;
   }
   export interface PolicyConsentInput {
     policy_document_ids: string[];
@@ -62,10 +64,13 @@ export namespace AccountProvider {
   }
 
   export function update(authorization: string | undefined, input: Update): Promise<AuthProvider.User> {
-    K.keys(input, ["handle", "nickname", "biography", "visibility"]);
+    K.keys(input, ["handle", "nickname", "biography", "visibility", "profile_photo_object_id"]);
     return K.transaction(async (tx) => {
       const actor = await AuthProvider.actor(authorization, tx);
       await K.consent(tx, actor.id);
+      if (input.profile_photo_object_id && !await tx.stored_objects.findFirst({ where: {
+        id: input.profile_photo_object_id, owner_user_id: actor.id, deleted_at: null, purged_at: null,
+      } })) K.fail(404, "NOT_FOUND", "사용할 수 있는 프로필 사진을 찾을 수 없습니다.");
       let handle = actor.handle;
       if (input.handle !== undefined) {
         handle = AuthProvider.identifier(input.handle);
@@ -82,6 +87,7 @@ export namespace AccountProvider {
         handle, ...(nickname === undefined ? {} : { nickname }),
         ...(input.biography === undefined ? {} : { biography: input.biography }),
         ...(input.visibility === undefined ? {} : { visibility: input.visibility }), ...K.changed(actor.id),
+        ...(input.profile_photo_object_id === undefined ? {} : { profile_photo_object_id: input.profile_photo_object_id }),
       } });
       return K.publicUser(updated);
     });

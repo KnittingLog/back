@@ -13,6 +13,7 @@ export namespace AuthProvider {
     handle: string;
     nickname: string;
     biography: string | null;
+    profile_photo_object_id?: string | null;
     visibility: "public" | "friends" | "private";
   }
   export interface Session {

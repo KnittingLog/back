@@ -4,6 +4,7 @@ export namespace AuthProvider {
     handle: string;
     nickname: string;
     biography: null | string;
+    profile_photo_object_id?: null | undefined | string;
     visibility: "friends" | "private" | "public";
   };
   export type Registration = {
