@@ -27,11 +27,18 @@ export async function test_api_knittinglog_report_operator_workflow(connection: 
   const [author, reporter] = await Promise.all([K.register(connection), K.register(connection)]);
   const post = typia.assert<K.Post>(await K.request(author.connection, "POST", "/posts", 201, { body: "신고 접수 당시 게시글" }), K.invalidResponse);
   const receipt = typia.assert<{ id: string }>(await K.request(reporter.connection, "POST", "/reports", 201, {
-    post_id: post.id, reason_code: "spam", detail: "운영 조치 테스트", block_target: false,
+    post_id: post.id, reason_code: "spam", detail: "운영 조치 테스트", block_target: true,
   }), K.invalidResponse);
-  const read = async (): Promise<K.Report> => typia.assert<K.Report>(await K.request(operator, "GET", `/admin/reports/${receipt.id}`, 200), K.invalidResponse);
+  type ReportDetail = Omit<K.Report, "actions"> & { actions: Array<{
+    id: string; report_id: string; actor_user_id: string; action_code: string; reason: string;
+    result: { status: K.Report["status"]; blocked_id?: string; post_hidden?: boolean; already_deleted?: boolean };
+  }> };
+  const read = async (): Promise<ReportDetail> => typia.assert<ReportDetail>(await K.request(operator, "GET", `/admin/reports/${receipt.id}`, 200), K.invalidResponse);
   const initial = await read();
   assert.equal(initial.status, "received");
+  assert.deepEqual(initial.actions.map((entry) => entry.action_code), ["block"]);
+  assert.equal(initial.actions[0]?.actor_user_id, reporter.session.user.id);
+  assert.deepEqual(initial.actions[0]?.result, { status: "received", blocked_id: author.session.user.id });
   assert.equal(initial.target_snapshot.body, post.body);
   assert.deepEqual(Object.keys(initial.target_snapshot).sort((a, b) => a.localeCompare(b)), ["schema_version", "author_id", "body", "source_updated_at"].sort((a, b) => a.localeCompare(b)));
   const queue = typia.assert<K.Report[]>(await K.request(operator, "GET", "/admin/reports?status=received", 200), K.invalidResponse);
@@ -49,6 +56,10 @@ export async function test_api_knittinglog_report_operator_workflow(connection: 
     operation_id: randomUUID(), action_code: "hide_post", reason: "게시글 숨김", expected_status: "reviewing",
   }), K.invalidResponse);
   assert.equal(hidden.result.post_hidden, true);
+  const alreadyHidden = typia.assert<K.ReportAction>(await K.request(operator, "POST", `/admin/reports/${receipt.id}/actions`, 201, {
+    operation_id: randomUUID(), action_code: "hide_post", reason: "이미 숨긴 게시글 확인", expected_status: "reviewing",
+  }), K.invalidResponse);
+  assert.equal(alreadyHidden.result.post_hidden, false);
   await K.error(reporter.connection, "GET", `/posts/${post.id}`, 404);
   assert.deepEqual((await read()).target_snapshot, initial.target_snapshot);
   const closed = typia.assert<K.ReportAction>(await K.request(operator, "POST", `/admin/reports/${receipt.id}/actions`, 201, {
@@ -57,7 +68,10 @@ export async function test_api_knittinglog_report_operator_workflow(connection: 
   assert.equal(closed.result.status, "closed");
   const final = await read();
   assert.equal(final.status, "closed");
-  assert.deepEqual(final.actions.map((entry) => entry.id), [reviewed.id, hidden.id, closed.id]);
+  assert.deepEqual(final.actions.map((entry) => entry.id), [initial.actions[0]!.id, reviewed.id, hidden.id, alreadyHidden.id, closed.id]);
+  assert.deepEqual(final.actions.find((entry) => entry.id === alreadyHidden.id)?.result, {
+    status: "reviewing", post_hidden: false, already_deleted: true,
+  });
   assert.deepEqual(final.target_snapshot, initial.target_snapshot);
   await K.error(reporter.connection, "PATCH", `/admin/reports/${receipt.id}`, 404, { target_snapshot: {} });
 }

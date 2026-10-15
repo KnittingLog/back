@@ -128,9 +128,9 @@ export namespace KnittingLogApi {
     id: string;
     report_id: string;
     actor_user_id: string;
-    action_code: "review" | "close" | "hide_post";
+    action_code: "review" | "close" | "hide_post" | "block";
     reason: string;
-    result: { status: "received" | "reviewing" | "closed"; post_hidden?: boolean };
+    result: { status: "received" | "reviewing" | "closed"; post_hidden?: boolean; already_deleted?: boolean; blocked_id?: string };
   }
   export interface Record {
     id: string;
