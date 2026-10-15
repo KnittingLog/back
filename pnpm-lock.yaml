@@ -35,8 +35,8 @@ catalogs:
       specifier: ^3.0.0
       version: 3.0.0
     typia:
-      specifier: 14.0.2
-      version: 14.0.2
+      specifier: 15.1.0
+      version: 15.1.0
   typescript:
     '@ttsc/evidence':
       specifier: 0.30.4
@@ -99,7 +99,7 @@ importers:
         version: 1.2.1
       typia:
         specifier: catalog:samchon
-        version: 14.0.2(ttsc@0.30.4)
+        version: 15.1.0(ttsc@0.30.4)
     devDependencies:
       '@knittinglog/api':
         specifier: workspace:^
@@ -136,13 +136,13 @@ importers:
         version: link:../api
       '@nestia/core':
         specifier: catalog:samchon
-        version: 12.1.0(@modelcontextprotocol/sdk@1.32.1(zod@4.6.5))(@nestia/fetcher@12.1.0)(@nestjs/common@12.1.2(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@12.1.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)(typia@14.0.2(ttsc@0.30.4))
+        version: 12.1.0(@modelcontextprotocol/sdk@1.32.1(zod@4.6.5))(@nestia/fetcher@12.1.0)(@nestjs/common@12.1.2(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@12.1.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)(typia@15.1.0(ttsc@0.30.4))
       '@nestia/fetcher':
         specifier: catalog:samchon
         version: 12.1.0
       '@nestia/sdk':
         specifier: catalog:samchon
-        version: 12.1.0(@nestia/core@12.1.0(@modelcontextprotocol/sdk@1.32.1(zod@4.6.5))(@nestia/fetcher@12.1.0)(@nestjs/common@12.1.2(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@12.1.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)(typia@14.0.2(ttsc@0.30.4)))(@types/node@24.19.1)
+        version: 12.1.0(@nestia/core@12.1.0(@modelcontextprotocol/sdk@1.32.1(zod@4.6.5))(@nestia/fetcher@12.1.0)(@nestjs/common@12.1.2(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@12.1.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)(typia@15.1.0(ttsc@0.30.4)))(@types/node@24.19.1)
       '@nestjs/common':
         specifier: ^12.1.2
         version: 12.1.2(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -190,7 +190,7 @@ importers:
         version: 3.0.0
       typia:
         specifier: catalog:samchon
-        version: 14.0.2(ttsc@0.30.4)
+        version: 15.1.0(ttsc@0.30.4)
       uuid:
         specifier: catalog:utils
         version: 13.0.2
@@ -863,42 +863,36 @@ packages:
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [arm64]
     os: [linux]
-    libc: [glibc]
 
   '@rolldown/binding-linux-arm64-musl@1.2.13':
     resolution: {integrity: sha512-xU+Kvv9N2A3SY35zFh1FWWNjxbadE/BKeqnkXe7vScU4GZsw757BlVmDLITZEq8DPpk6m7uoDYkK7P+x/uU5Ow==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [arm64]
     os: [linux]
-    libc: [musl]
 
   '@rolldown/binding-linux-ppc64-gnu@1.2.13':
     resolution: {integrity: sha512-XMk/hnhh25oQ756Lclb1Q11h4ll0xC0Esa5w4Vzp+mAE2S3AGJgeM0SonrIgY8fHhjarb6hcoTuwoFG0VVP2ig==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [ppc64]
     os: [linux]
-    libc: [glibc]
 
   '@rolldown/binding-linux-s390x-gnu@1.2.13':
     resolution: {integrity: sha512-U1BoTHYmlywE2n3HUWjzZ+8EQsKr+OwpxYuDWaubx42tUL8QSL7nOqRz/NVHanibbFP3M1Rxuprz/wNcbMKjqw==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [s390x]
     os: [linux]
-    libc: [glibc]
 
   '@rolldown/binding-linux-x64-gnu@1.2.13':
     resolution: {integrity: sha512-J4cm80Pc6wEwV5AZ42o62sIQgDk+Y7R2s646jIwuvO+4V46QB58N4vVuMPWCBaNgursXLpmUWJV//WQAkPvHBQ==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [x64]
     os: [linux]
-    libc: [glibc]
 
   '@rolldown/binding-linux-x64-musl@1.2.13':
     resolution: {integrity: sha512-W0euZS40U4V6JkmEnVCIX9mcsL6cbXQ4X8c2w+MMOIjFg68TXUW+u3RT+2e1t1pv9mg/EP3pDtK3POXdQ7Rxyw==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [x64]
     os: [linux]
-    libc: [musl]
 
   '@rolldown/binding-openharmony-arm64@1.2.13':
     resolution: {integrity: sha512-do/AF/4n9MRshia3a5aXoy8xM2c6mgfT6D7H/dY6my5z+hfCIR4ab7mk4IRj++nsEQpKy39kd0DQnDq+r692tw==}
@@ -1283,11 +1277,11 @@ packages:
   '@typia/interface@13.3.0':
     resolution: {integrity: sha512-TJb21ylMKBqkUpKn9kQ21CMMJGaTTCNs5hU9u2LV3xUTO41Vctew9GjERCzOpgnpA2MlBqrCTSvuXk4krinWjA==}
 
-  '@typia/interface@14.0.2':
-    resolution: {integrity: sha512-2P/f5s3js/Yw3x7JJuM6jjhyWON3/asnXGE0p2n6WV4KxTgTWO1Qj/euPN8Y5+mfiYQuq8TcIRBekVyjyFlVWQ==}
-
   '@typia/interface@14.0.6':
     resolution: {integrity: sha512-Ct4cW8vt1OfZNFlRBrVFeWZZrM/KvNUg4bmeIU4amXgYYp1sZkY71h+6GdrL+ApdF0KNnRxZ92hrrlbDodsjNg==}
+
+  '@typia/interface@15.1.0':
+    resolution: {integrity: sha512-kiKKWTAmJ8x48eUAkzTwH4AsX3CSe5AcsxGUkzkOqhqwlklxUWIACw93DXTr2F5aDIse3YBExJerWdgURsring==}
 
   '@typia/mcp@14.0.6':
     resolution: {integrity: sha512-TI0QbjQ2/vQS6u/VzH8pVy93/DK4truTPLxHK9TsT41qjjVzyP0w1G1gjBMxSnYAZUxoEUTPwUuSGcEnjyuwlQ==}
@@ -1300,11 +1294,11 @@ packages:
   '@typia/utils@13.3.0':
     resolution: {integrity: sha512-W9NDW5SfqNBhMe/YwUwp/nyXfzsaovMwQs/eykmfsYqlGx6FoBJnXWK7zdBSfDBkjwF4AZzejqgBlndTxtluZg==}
 
-  '@typia/utils@14.0.2':
-    resolution: {integrity: sha512-lDeWtIv6IF06bhuJJGxu/BkUrasJyxSYgIZ246lFTZxW53BhNnRoc+LaJSmbj/V39409PY3n7dotNVdVytY7fA==}
-
   '@typia/utils@14.0.6':
     resolution: {integrity: sha512-g1LLQiOdPNyFR6dEQKsaa8HQnpZAAW+XAG0tVQ3/fVCARR5n4Yn59jBSI1UcNEv4F9DaM7vzHZi0b4iS+liajw==}
+
+  '@typia/utils@15.1.0':
+    resolution: {integrity: sha512-9NLCbKI2rQOA4M9EbEx0HwXfKIUIdkvO2J+6mZQttx2CBfiIspgt0VdJSvmD0hqMKa6LvDdmeBKl13wTizVGog==}
 
   '@visx/curve@4.0.1-alpha.0':
     resolution: {integrity: sha512-jRu61Uz274pV1zyioXmboyrLutYbnKsgjj4njSGCnhdXj5GkZvZbg+ThDb6oOzoAnJOBRLz4rzPlWvNJOzuVMg==}
@@ -3313,16 +3307,16 @@ packages:
       ttsc:
         optional: true
 
-  typia@14.0.2:
-    resolution: {integrity: sha512-yyqPAX+/0Wg1L4W/eglQjeZvEOQJrV9tH8m6rOJ06qEDXmZDsDidjysOSuuxEBha623hNPgwnU/YpymKn4PRlQ==}
+  typia@14.0.6:
+    resolution: {integrity: sha512-dWtC9sMgmlR26yms6BAHWO0/P4Vzfw/cs1Mg+ZRYFlGub1CXRnF343EVgoZcxQdzoaPh50nTOtgd2Oaym73pIg==}
     peerDependencies:
       ttsc: '>=0.19.2'
     peerDependenciesMeta:
       ttsc:
         optional: true
 
-  typia@14.0.6:
-    resolution: {integrity: sha512-dWtC9sMgmlR26yms6BAHWO0/P4Vzfw/cs1Mg+ZRYFlGub1CXRnF343EVgoZcxQdzoaPh50nTOtgd2Oaym73pIg==}
+  typia@15.1.0:
+    resolution: {integrity: sha512-EW+b8jxKrRU/Q0eJXFry53vL6LFRlAMsSvfhKq3hh4pLTiswBWJMs6g4AtNlCPGCYJ0WMbSEME2qqe8DM7PnHg==}
     peerDependencies:
       ttsc: '>=0.19.2'
     peerDependenciesMeta:
@@ -3750,7 +3744,7 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@nestia/core@12.1.0(@modelcontextprotocol/sdk@1.32.1(zod@4.6.5))(@nestia/fetcher@12.1.0)(@nestjs/common@12.1.2(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@12.1.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)(typia@14.0.2(ttsc@0.30.4))':
+  '@nestia/core@12.1.0(@modelcontextprotocol/sdk@1.32.1(zod@4.6.5))(@nestia/fetcher@12.1.0)(@nestjs/common@12.1.2(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@12.1.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)(typia@15.1.0(ttsc@0.30.4))':
     dependencies:
       '@nestia/fetcher': 12.1.0
       '@nestjs/common': 12.1.2(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -3764,7 +3758,7 @@ snapshots:
       reflect-metadata: 0.2.2
       rxjs: 7.8.2
       tgrid: 1.2.1
-      typia: 14.0.2(ttsc@0.30.4)
+      typia: 15.1.0(ttsc@0.30.4)
       ws: 7.5.11
     optionalDependencies:
       '@modelcontextprotocol/sdk': 1.32.1(zod@4.6.5)
@@ -3779,9 +3773,9 @@ snapshots:
       '@typia/interface': 13.2.0
       '@typia/utils': 13.2.0
 
-  '@nestia/sdk@12.1.0(@nestia/core@12.1.0(@modelcontextprotocol/sdk@1.32.1(zod@4.6.5))(@nestia/fetcher@12.1.0)(@nestjs/common@12.1.2(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@12.1.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)(typia@14.0.2(ttsc@0.30.4)))(@types/node@24.19.1)':
+  '@nestia/sdk@12.1.0(@nestia/core@12.1.0(@modelcontextprotocol/sdk@1.32.1(zod@4.6.5))(@nestia/fetcher@12.1.0)(@nestjs/common@12.1.2(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@12.1.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)(typia@15.1.0(ttsc@0.30.4)))(@types/node@24.19.1)':
     dependencies:
-      '@nestia/core': 12.1.0(@modelcontextprotocol/sdk@1.32.1(zod@4.6.5))(@nestia/fetcher@12.1.0)(@nestjs/common@12.1.2(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@12.1.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)(typia@14.0.2(ttsc@0.30.4))
+      '@nestia/core': 12.1.0(@modelcontextprotocol/sdk@1.32.1(zod@4.6.5))(@nestia/fetcher@12.1.0)(@nestjs/common@12.1.2(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@12.1.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)(typia@15.1.0(ttsc@0.30.4))
       '@nestia/fetcher': 12.1.0
       '@ttsc/factory': 0.20.1
       '@typia/interface': 13.2.0
@@ -4456,9 +4450,9 @@ snapshots:
 
   '@typia/interface@13.3.0': {}
 
-  '@typia/interface@14.0.2': {}
-
   '@typia/interface@14.0.6': {}
+
+  '@typia/interface@15.1.0': {}
 
   '@typia/mcp@14.0.6(@modelcontextprotocol/sdk@1.32.1(zod@4.6.5))':
     dependencies:
@@ -4474,13 +4468,13 @@ snapshots:
     dependencies:
       '@typia/interface': 13.3.0
 
-  '@typia/utils@14.0.2':
-    dependencies:
-      '@typia/interface': 14.0.2
-
   '@typia/utils@14.0.6':
     dependencies:
       '@typia/interface': 14.0.6
+
+  '@typia/utils@15.1.0':
+    dependencies:
+      '@typia/interface': 15.1.0
 
   '@visx/curve@4.0.1-alpha.0':
     dependencies:
@@ -6551,18 +6545,18 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
-  typia@14.0.2(ttsc@0.30.4):
-    dependencies:
-      '@typia/interface': 14.0.2
-      '@typia/utils': 14.0.2
-      randexp: 0.5.3
-    optionalDependencies:
-      ttsc: 0.30.4
-
   typia@14.0.6(ttsc@0.30.4):
     dependencies:
       '@typia/interface': 14.0.6
       '@typia/utils': 14.0.6
+      randexp: 0.5.3
+    optionalDependencies:
+      ttsc: 0.30.4
+
+  typia@15.1.0(ttsc@0.30.4):
+    dependencies:
+      '@typia/interface': 15.1.0
+      '@typia/utils': 15.1.0
       randexp: 0.5.3
     optionalDependencies:
       ttsc: 0.30.4
