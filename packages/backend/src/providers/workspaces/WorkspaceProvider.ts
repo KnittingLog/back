@@ -155,9 +155,7 @@ export namespace WorkspaceProvider {
       "INVALID_INPUT",
       "카운터 이름이 올바르지 않습니다.",
     );
-    if (input.target_value !== null) RecordProvider.duration(
-      input.target_value,
-    );
+    if (input.target_value !== null) counterValue(input.target_value);
     return K.transaction(async (tx) => {
       const actor = await AuthProvider.actor(auth, tx);
       const workspace = await K.workspace(tx, actor.id, workspaceId, true);
@@ -209,10 +207,8 @@ export namespace WorkspaceProvider {
     );
     const update = input as CounterUpdate;
     if (kind === "update") {
-      if (update.value !== undefined) RecordProvider.duration(update.value);
-      if (update.target_value !== undefined && update.target_value !== null) RecordProvider.duration(
-        update.target_value,
-      );
+      if (update.value !== undefined) counterValue(update.value);
+      if (update.target_value !== undefined && update.target_value !== null) counterValue(update.target_value);
       if (update.name !== undefined && (!update.name.trim() || update.name.length > 100)) K.fail(
         400,
         "INVALID_INPUT",
@@ -232,7 +228,7 @@ export namespace WorkspaceProvider {
         if (kind === "adjust" && delta !== 1 && delta !== -1) K.fail(400, "INVALID_INPUT", "증감 값은 1 또는 -1이어야 합니다.");
         const value = kind === "adjust" ? row.value + delta : kind === "reset" ? 0 : (update.value ?? row.value);
         if (value < 0) K.fail(409, "COUNTER_NEGATIVE", "카운터는 음수가 될 수 없습니다.");
-        RecordProvider.duration(value);
+        counterValue(value);
         const deleted_at = kind === "delete" ? new Date() : null;
         const changed = await tx.project_counters.update({ where: { id }, data: {
           value, ...(kind === "update" ? { name: update.name?.trim(), target_value: update.target_value, is_visible: update.is_visible } : {}),
@@ -243,6 +239,14 @@ export namespace WorkspaceProvider {
         return counterView(changed);
       });
     });
+  }
+
+  function counterValue(value: number): void {
+    if (!Number.isSafeInteger(value) || value < 0 || value > 2147483647) K.fail(
+      400,
+      "INVALID_INPUT",
+      "카운터 값은 0 이상의 정수여야 합니다.",
+    );
   }
 
   export function timer(auth: string | undefined, workspaceId: string): Promise<Timer | null> {

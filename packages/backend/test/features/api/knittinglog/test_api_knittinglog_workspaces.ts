@@ -88,10 +88,19 @@ export async function test_api_knittinglog_counter_collection(connection: K.Conn
   const project = await K.project(actor);
   const workspace = await K.workspace(actor, project.id);
   const defaults = await K.counters(actor, workspace.id);
+  const otherMember = await K.register(connection);
+  await K.befriend(actor, otherMember);
+  await K.join(actor, otherMember, project.id);
+  const otherWorkspace = await K.workspace(otherMember, project.id);
+  const foreignCounter = (await K.counters(otherMember, otherWorkspace.id))[0]!;
   const input = { operation_id: randomUUID(), expected_version: workspace.version, name: "추가 카운터", target_value: null, is_visible: true };
   const created = typia.assert<K.Counter>(await K.request(actor.connection, "POST", `/workspaces/${workspace.id}/counters`, 201, input), K.invalidResponse);
   const current = await K.workspace(actor, project.id);
   const orderedIds = [created.id, ...defaults.map((entry) => entry.id)];
+  await K.error(actor.connection, "PATCH", `/workspaces/${workspace.id}/counters/order`, 400, {
+    operation_id: randomUUID(), expected_version: current.version,
+    counter_ids: [foreignCounter.id, ...defaults.map((entry) => entry.id)],
+  });
   await K.error(actor.connection, "PATCH", `/workspaces/${workspace.id}/counters/order`, 409, {
     operation_id: randomUUID(), expected_version: workspace.version, counter_ids: orderedIds,
   });

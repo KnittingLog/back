@@ -33,6 +33,7 @@ export namespace RecordProvider {
     emoji_code: string;
   }
   export interface Create {
+    operation_id?: string;
     source: "manual" | "timer";
     body: string | null;
     duration_seconds: number;
@@ -43,6 +44,7 @@ export namespace RecordProvider {
     duration_seconds?: number;
   }
   export interface Text {
+    operation_id?: string;
     body: string;
   }
 
@@ -114,7 +116,7 @@ export namespace RecordProvider {
   }
 
   export function create(auth: string | undefined, workspaceId: string, input: Create): Promise<Record> {
-    K.keys(input, ["source", "body", "duration_seconds", "recorded_at"]);
+    K.keys(input, ["operation_id", "source", "body", "duration_seconds", "recorded_at"]);
     duration(input.duration_seconds);
     if (input.body !== null && input.body.length > 20_000) K.fail(
       400,
@@ -128,10 +130,12 @@ export namespace RecordProvider {
     return K.transaction(async (tx) => {
       const actor = await AuthProvider.actor(auth, tx);
       const workspace = await K.workspace(tx, actor.id, workspaceId, true);
-      if (workspace.status === "done") K.fail(409, "WORKSPACE_DONE", "완료한 작업 공간에는 새 기록을 추가할 수 없습니다.");
-      const row = await tx.project_records.create({ data: { workspace_id: workspace.id, author_id: actor.id, source: input.source, body: input.body, duration_seconds: input.duration_seconds, recorded_at, ...K.audit(actor.id) } });
-      await K.bump(tx, workspace.id, actor.id);
-      return view(row, actor.nickname ?? "");
+      return K.command(tx, actor.id, input.operation_id ?? randomUUID(), "record_create", { workspaceId, ...input }, async () => {
+        if (workspace.status === "done") K.fail(409, "WORKSPACE_DONE", "완료한 작업 공간에는 새 기록을 추가할 수 없습니다.");
+        const row = await tx.project_records.create({ data: { workspace_id: workspace.id, author_id: actor.id, source: input.source, body: input.body, duration_seconds: input.duration_seconds, recorded_at, ...K.audit(actor.id) } });
+        await K.bump(tx, workspace.id, actor.id);
+        return view(row, actor.nickname ?? "");
+      });
     });
   }
 
@@ -177,15 +181,16 @@ export namespace RecordProvider {
   }
 
   export function comment(auth: string | undefined, id: string, input: Text): Promise<Comment> {
-    K.keys(input, ["body"]);
+    K.keys(input, ["operation_id", "body"]);
     text(input.body);
     return K.transaction(async (tx) => {
       const actor = await AuthProvider.actor(auth, tx);
-      const { workspace } = await accessible(tx, actor.id, id);
+      await accessible(tx, actor.id, id);
       await K.consent(tx, actor.id);
-      const row = await tx.record_comments.create({ data: { record_id: id, author_id: actor.id, body: input.body, ...K.audit(actor.id) } });
-      await K.bump(tx, workspace.id, actor.id);
-      return commentView(row, actor.nickname ?? "");
+      return K.command(tx, actor.id, input.operation_id ?? randomUUID(), "record_comment", { id, ...input }, async () => {
+        const row = await tx.record_comments.create({ data: { record_id: id, author_id: actor.id, body: input.body, ...K.audit(actor.id) } });
+        return commentView(row, actor.nickname ?? "");
+      });
     });
   }
 
@@ -194,11 +199,10 @@ export namespace RecordProvider {
       const actor = await AuthProvider.actor(auth, tx);
       const comment = await tx.record_comments.findFirst({ where: { id, deleted_at: null } });
       if (!comment) K.fail(404, "NOT_FOUND", "댓글을 찾을 수 없습니다.");
-      const { workspace } = await accessible(tx, actor.id, comment.record_id);
+      await accessible(tx, actor.id, comment.record_id);
       await K.consent(tx, actor.id);
       if (comment.author_id !== actor.id) K.fail(403, "FORBIDDEN", "본인의 댓글만 삭제할 수 있습니다.");
       await tx.record_comments.update({ where: { id }, data: { deleted_at: new Date(), deletion_operation_id: randomUUID(), ...K.changed(actor.id) } });
-      await K.bump(tx, workspace.id, actor.id);
     });
   }
 
@@ -221,13 +225,14 @@ export namespace RecordProvider {
     const emoji_code = emoji as typeof allowed[number];
     return K.transaction(async (tx) => {
       const actor = await AuthProvider.actor(auth, tx);
-      const { workspace } = await accessible(tx, actor.id, id);
+      await accessible(tx, actor.id, id);
       await K.consent(tx, actor.id);
       const existing = await tx.record_reactions.findUnique({ where: { record_id_user_id_emoji_code: { record_id: id, user_id: actor.id, emoji_code } } });
-      const row = existing
-        ? await tx.record_reactions.update({ where: { id: existing.id }, data: { deleted_at: remove ? new Date() : null, ...K.changed(actor.id) } })
-        : await tx.record_reactions.create({ data: { record_id: id, user_id: actor.id, emoji_code, deleted_at: remove ? new Date() : null, ...K.audit(actor.id) } });
-      await K.bump(tx, workspace.id, actor.id);
+      const row = existing && !existing.deleted_at && !remove
+        ? existing
+        : existing
+          ? await tx.record_reactions.update({ where: { id: existing.id }, data: { deleted_at: remove ? new Date() : null, ...K.changed(actor.id) } })
+          : await tx.record_reactions.create({ data: { record_id: id, user_id: actor.id, emoji_code, deleted_at: remove ? new Date() : null, ...K.audit(actor.id) } });
       return reactionView(row);
     });
   }
