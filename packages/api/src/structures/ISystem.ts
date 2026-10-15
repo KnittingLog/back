@@ -12,11 +12,6 @@ export type ISystem = {
   uid: number;
 
   /**
-   * `process.argv`
-   */
-  arguments: string[];
-
-  /**
    * Git commit info.
    */
   commit: ISystem.ICommit;

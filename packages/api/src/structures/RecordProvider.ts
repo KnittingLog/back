@@ -10,6 +10,7 @@ export namespace RecordProvider {
     recorded_at: string;
   };
   export type Create = {
+    operation_id?: undefined | string;
     source: "manual" | "timer";
     body: null | string;
     duration_seconds: number;
@@ -26,7 +27,7 @@ export namespace RecordProvider {
     author_name: string;
     body: string;
   };
-  export type Text = { body: string };
+  export type Text = { operation_id?: undefined | string; body: string };
   export type Reaction = {
     id: string;
     record_id: string;

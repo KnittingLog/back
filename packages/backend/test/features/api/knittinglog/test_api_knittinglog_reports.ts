@@ -30,3 +30,12 @@ export async function test_api_knittinglog_report_target(connection: K.Connectio
   assert.equal(receipt.post_id, null);
   await K.error(reporter.connection, "GET", `/users/${target.session.user.id}`, 404);
 }
+
+export async function test_api_knittinglog_uppercase_self_relations(connection: K.Connection): Promise<void> {
+  const actor = await K.register(connection);
+  const id = actor.session.user.id.toUpperCase();
+  const request = await K.error(actor.connection, "POST", "/friend-requests", 400, { recipient_id: id });
+  assert.equal(request.code, "SELF_RELATION");
+  const block = await K.error(actor.connection, "POST", "/blocks", 400, { blocked_id: id });
+  assert.equal(block.code, "SELF_RELATION");
+}

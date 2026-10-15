@@ -50,11 +50,12 @@ KNITTINGLOG_TEST_ALLOW_WRITES=1 pnpm -C packages/backend test:integration:isolat
 - 실행기는 실제 데이터 경로·서버 주소·포트를 조회한 뒤 이 새 DB에만 생성 SQL과 보완 제약을 적용합니다. 기존 마이그레이션 폴더와 환경 파일을 변경하지 않습니다.
 - 이미 사용 중인 `50801` 포트와 외부 `POSTGRES_URL`·`KNITTINGLOG_TEST_URL`·PostgreSQL service 설정은 실행 전에 거부합니다. 기존 서버를 중지하거나 다른 DB로 자동 전환하지 않습니다.
 - SQL 검사는 정확한 `expected_data_directory`와 `expected_port`, 명시한 쓰기 승인을 확인합니다. 경로 누락·경로 불일치·포트 불일치·승인 누락·승인 거부·Unix socket 접속의 6개 거부 조건도 검사합니다.
-- CHECK 34개, 부분 고유 인덱스 4개와 물리 FK 부재를 검사합니다. 검사 행을 모두 롤백한 뒤 업무 테이블이 비어 있는지 확인합니다.
+- CHECK 35개, 부분 고유 인덱스 4개와 물리 FK 부재를 검사합니다. 검사 행을 모두 롤백한 뒤 업무 테이블이 비어 있는지 확인합니다.
 - 실행기는 테스트 전용 정책 2개를 생성하고 UTC·필수 재동의·비밀번호 제공자 거부·이관 중간 실패·실제 HTTP 44개 검사를 실행합니다. 일시정지 타이머 검사는 이 44개에 포함됩니다.
 - [비밀번호 검사](../packages/backend/test/integration/password-screening.ts)는 제공자의 거부·장애가 HTTP 400·503을 반환하고 계정·동의·복구 코드·세션을 바꾸지 않는지 확인합니다. 이 단계의 제공자 응답은 주입합니다. 실제 제공자 검사는 아래 별도 명령으로 분리합니다.
 - [이관 롤백 검사](../packages/backend/test/integration/transfer-rollback.ts)는 새 DB에만 임시 실패 트리거를 설치합니다. 이관 이력 저장 전에 오류를 주입하고 11개 업무 테이블이 이전 상태인지 비교합니다. 트리거를 제거한 뒤 같은 명령 재시도·중복 방지와 댓글·반응·타이머 보존을 확인합니다.
-- 새 두 DB 검사는 `KNITTINGLOG_TEST_DATA_DIRECTORY`와 실제 서버의 경로·주소·포트·DB를 다시 비교합니다. 경로가 다른 두 실행의 거부와 업무 데이터 변경 부재도 실행기가 검사합니다. 운영 코드에는 실패 주입 훅을 추가하지 않습니다.
+- 비밀번호·이관 롤백·콘텐츠 복구·파일 수명주기·공유 인증 제한·콘텐츠 물리삭제의 6개 진입점은 `KNITTINGLOG_TEST_DATA_DIRECTORY`와 실제 서버의 경로·주소·포트·DB를 다시 비교합니다. 잘못된 경로의 거부와 업무 데이터 변경 부재도 실행기가 검사합니다. 운영 코드에는 실패 주입 훅을 추가하지 않습니다.
+- 신규 검사의 승인 대상·보존·복원·명령 재시도 계약은 [복구와 파일 수명주기](backend-maintenance.md)를 따릅니다. 정상 경로를 실제 생성 SDK로 호출합니다. 독립 Prisma 클라이언트 2개는 공유 인증 제한을 검사합니다.
 - 성공과 실패 모두 새 클러스터를 종료합니다. 생성한 검사 데이터와 비밀값을 출력하지 않는 로그는 해당 임시 폴더에 보존합니다. 기존 `50799` 클러스터는 변경하지 않습니다.
 - 쓰기 승인값은 실행 명령에서 사용자가 전달합니다. CI가 이를 자동 설정하거나 통합 검사를 실행하도록 변경하지 않았습니다.
 
@@ -86,7 +87,7 @@ KNITTINGLOG_TEST_LIVE_PASSWORDS=1 pnpm -C packages/backend ttsx --project test/t
 - 인증 헤더는 Authorization: Bearer 형식을 사용합니다. 공개 사용자 응답에 로그인 ID와 인증 필드를 넣지 않습니다.
 - 피드 목록은 `{ items, next_cursor }`를 반환합니다. 나머지 목록 응답은 배열입니다.
 - 인증·가입·공개 정책 조회를 포함한 모든 업무 경로는 `/api/v1`로 시작합니다. 경로 누락·미지원 버전은 404입니다. 자동 버전 선택이나 리다이렉트는 금지합니다.
-- `/monitors/health`, `/monitors/system`, `/monitors/performance`는 기존 운영 경로를 유지합니다. 버전별 모니터 경로를 추가하지 않습니다.
+- `/monitors/health`, `/monitors/system`, `/monitors/performance`는 기존 운영 경로를 유지합니다. 버전별 모니터 경로를 추가하지 않습니다. 인증 없는 시험 오류 경로는 제공하지 않습니다. `/monitors/system`은 프로세스 실행 인자를 반환하지 않습니다.
 
 ## 요청 경로
 
@@ -101,7 +102,7 @@ KNITTINGLOG_TEST_LIVE_PASSWORDS=1 pnpm -C packages/backend ttsx --project test/t
 | POST /auth/recovery-code | 현재 비밀번호로 재인증한 뒤 새 recovery_code를 반환합니다. 이전 코드를 무효화합니다. |
 | POST /auth/refresh | refresh_token을 받습니다. 유효한 세션을 반환합니다. |
 | POST /auth/logout | 현재 세션의 refresh_token을 폐기합니다. |
-| GET·PATCH·DELETE /users/me | 자신의 기본 정보 조회, 변경과 탈퇴를 수행합니다. |
+| GET·PATCH·DELETE /users/me | 자신의 기본 정보 조회, 변경과 탈퇴를 수행합니다. 탈퇴 본문의 선택 필드 successors는 project_id·successor_user_id 배열입니다. 다른 멤버가 있는 방장 프로젝트마다 후임을 지정해야 합니다. 후임 이관과 탈퇴는 같은 트랜잭션에서 처리하며 정책 재동의를 요구하지 않습니다. |
 | GET /users/me/policy-consents | 가입 시 동의한 버전 식별자와 동의 시각을 반환합니다. |
 | POST /users/me/policy-consents | 현재 policy_document_ids에 재동의합니다. 동일 버전의 기존 동의 시각을 유지하고 Consent 배열을 반환합니다. |
 | GET /users/me/memberships | AccountController가 자신의 현재·종료한 프로젝트 참여 기간을 반환합니다. created_at 내림차순으로 정렬하고 같은 시각이면 id 내림차순으로 정렬합니다. |
@@ -118,13 +119,13 @@ KNITTINGLOG_TEST_LIVE_PASSWORDS=1 pnpm -C packages/backend ttsx --project test/t
 | DELETE /friends/:userId | 친구 관계를 해제합니다. |
 | POST /blocks | blocked_id 방향의 차단을 생성합니다. |
 | DELETE /blocks/:userId | 요청자의 방향만 해제합니다. |
-| GET·POST /projects | 개인 상태 필터로 조회합니다. name·invitee_user_ids로 생성합니다. |
+| GET·POST /projects | 개인 상태 필터로 조회합니다. sort=status이면 자신의 작업 상태 active·paused·done 순서와 생성 시각 내림차순으로 정렬합니다. name·invitee_user_ids로 생성합니다. |
 | GET·PATCH·DELETE /projects/:id | 프로젝트를 조회하고 방장이 변경·삭제합니다. |
-| GET /projects/:id/memberships | 유효한 참여만 반환합니다. |
+| GET /projects/:id/memberships | 유효한 참여만 반환합니다. 요청자와 양방향 차단 관계인 멤버는 숨깁니다. 참여 자체는 유지합니다. |
 | GET /projects/:id/workspaces | 현재 멤버의 개인 작업 공간을 반환합니다. |
 | PATCH /projects/:id/owner | owner_user_id의 유효한 멤버에게 방장을 양도합니다. |
 | POST /projects/:id/invitations | recipient_id의 친구를 초대합니다. |
-| GET /project-invitations?status=pending | 수신자의 대기 초대를 반환합니다. |
+| GET /project-invitations?status=pending | 수신자의 대기 초대를 반환합니다. status가 없으면 대기 초대만 반환합니다. 다른 상태는 명시한 status로 조회합니다. |
 | POST /project-invitations/:id/accept | 멤버십을 반환합니다. 반복 수락도 같은 멤버십을 반환합니다. |
 | DELETE /project-invitations/:id | 초대 송신자가 대기 초대를 취소합니다. |
 | GET·PATCH /workspaces/:id | 작업 공간을 조회하고 소유자가 상태·실·바늘 메모를 변경합니다. |
@@ -138,15 +139,15 @@ KNITTINGLOG_TEST_LIVE_PASSWORDS=1 pnpm -C packages/backend ttsx --project test/t
 | POST /workspaces/:id/timer/start | operation_id·expected_version으로 타이머를 시작하고 201을 반환합니다. 실행 중 중복 시작은 409입니다. |
 | POST /workspaces/:id/timer/pause·resume | operation_id·expected_version으로 상태를 바꾸고 200을 반환합니다. |
 | POST /workspaces/:id/timer/stop | operation_id·expected_version·body로 타이머를 종료하고 기록을 같은 트랜잭션에 저장합니다. 201과 기록을 반환합니다. |
-| GET·POST /workspaces/:id/records | 기록을 조회하고 완료된 manual·timer 시간을 저장합니다. |
+| GET·POST /workspaces/:id/records | 기록을 조회하고 완료된 manual·timer 시간을 저장합니다. 선택 필드 operation_id를 보내면 같은 입력의 재시도는 같은 기록을 반환하고 다른 입력은 409입니다. |
 | GET·PATCH·DELETE /records/:id | 기록을 조회하고 active·paused·done 상태에서 작성자가 기존 기록을 수정·삭제합니다. 합계와 작업 공간의 version에 반영합니다. |
-| GET·POST /records/:id/comments | 현재 접근 권한으로 댓글을 조회·작성합니다. |
+| GET·POST /records/:id/comments | 현재 접근 권한으로 댓글을 조회·작성합니다. 작성의 선택 필드 operation_id는 기록 작성과 같은 중복 방지를 적용합니다. 댓글과 반응은 작업 공간의 version을 증가시키지 않습니다. |
 | DELETE /record-comments/:id | 댓글 작성자만 삭제합니다. |
 | GET /records/:id/reactions | 유효한 반응을 조회합니다. |
 | PUT·DELETE /records/:id/reactions/:emoji | 자신의 반응을 멱등적으로 등록·해제합니다. |
 | POST /projects/:id/leave | 작업 공간을 이관합니다. 방장은 successor_user_id를 지정합니다. |
 | POST /projects/:id/members/:userId/kick | 방장이 해당 멤버의 작업 공간을 이관합니다. |
-| POST /reports | reason_code·detail과 정확히 한 대상 ID를 받습니다. block_target=true이면 사용자 차단도 처리합니다. |
+| POST /reports | reason_code·detail과 정확히 한 대상 ID를 받습니다. block_target=true이면 사용자 차단도 처리하고 신고자를 실행 주체로 하는 block 조치를 기록합니다. 자기 자신과 자신의 게시글은 대소문자와 무관하게 400입니다. |
 | POST /posts | body를 받아 작성자·생성 시각을 포함한 게시글을 생성합니다. |
 | GET /feed | limit·cursor를 받아 created_at·UUID 내림차순의 items와 next_cursor를 반환합니다. 현재 차단·삭제 상태를 매 요청에서 확인합니다. |
 | DELETE /posts/:id | 작성자만 게시글을 삭제합니다. PATCH 수정 경로는 지원하지 않습니다. |
@@ -156,7 +157,7 @@ KNITTINGLOG_TEST_LIVE_PASSWORDS=1 pnpm -C packages/backend ttsx --project test/t
 | DELETE /post-comments/:id | 현재 게시글 접근 권한을 가진 댓글 작성자만 삭제합니다. |
 | GET /admin/reports | 서버의 UUID 허용 목록과 현재 인증을 확인한 운영자만 신고 목록을 조회합니다. status로 필터합니다. 일반 사용자는 403입니다. |
 | GET /admin/reports/:id | 운영자에게 허용 필드만 포함한 접수 당시 텍스트 증거와 수정 불가 조치 이력을 반환합니다. |
-| POST /admin/reports/:id/actions | 운영자만 operation_id·action_code·reason·expected_status로 review·close·hide_post 조치를 수행합니다. 201과 조치 이력을 반환합니다. |
+| POST /admin/reports/:id/actions | 운영자만 operation_id·action_code·reason·expected_status로 review·close·hide_post 조치를 수행합니다. 201과 조치 이력을 반환합니다. 이미 삭제된 게시글의 hide_post는 post_hidden=false·already_deleted=true를 기록합니다. |
 
 이관 요청은 operation_id, workspace_id와 expected_version을 포함합니다. 이관 응답은 이력의 id, 작업 공간, 변경 전후 프로젝트·참여 기간과 workspace_version을 반환합니다. 반복 요청은 같은 입력과 같은 결과를 사용합니다. 다른 입력의 작업 식별자 재사용은 409입니다.
 
@@ -220,9 +221,9 @@ KNITTINGLOG_TEST_LIVE_PASSWORDS=1 pnpm -C packages/backend ttsx --project test/t
 | 범위 | 보류 이유 |
 |---|---|
 | V1-209 프로필 메뉴·V1-508 프로필 이동 | UI 동작과 API 책임이 분리되지 않았습니다. |
-| DB-DS-003 콘텐츠 복구·역이관 | 신고 운영자 인증과 콘텐츠 복구 승인은 다릅니다. 복구 승인·실행 API가 없습니다. 일반 사용자 복구 API를 임의로 만들지 않습니다. |
+| DB-DS-003 운영 복구 수용 | 복구·역이관의 별도 승인 API와 로컬 검사를 구현했습니다. 실제 운영 대상·담당자·백업 수용은 별도입니다. 일반 사용자 복구 권한으로 확대하지 않습니다. |
 | 운영자 화면·사용자 제재 | 이 작업은 제한된 운영자 API만 구현합니다. 화면과 계정 정지·자동 제재는 구현 범위가 아닙니다. |
-| 정책 본문 불변·파일 복구 | 정책 운영 조회와 파일 API가 없습니다. 작성 응답만으로 보존을 검증하지 않습니다. |
+| 정책 운영 발행·실제 백업 파일 복원 | 로컬 파일 API와 검증된 원래 키 복원 primitive를 구현했습니다. 실제 정책 발행과 운영 백업의 복원은 별도입니다. 작성·다운로드 응답만으로 이를 완료 처리하지 않습니다. |
 | 이관의 전체 실패 지점·파일 경계 | 이관 이력 저장 직전의 오류 주입과 11개 테이블 롤백은 통과했습니다. 다른 실패 지점과 파일 저장소의 원자성은 별도 검증이 필요합니다. |
 | 실제 백업 복원 | API 응답과 DB 제약 검사만으로 백업의 동작을 증명하지 않습니다. 별도 복원 검증이 필요합니다. |
 
@@ -230,11 +231,11 @@ DB CHECK와 부분 고유 인덱스는 별도의 실제 PostgreSQL 통합 검사
 
 ## 현재 증거
 
-2026-10-11의 로컬 `develop` 기준으로 다음 결과를 확인했습니다. 세부 로그와 실행 대상은 [최근 검증 기록](implementation-validation.md#내-참여-이력-조회-통합-2026-10-11)이 소유합니다.
+2026-10-15의 로컬 `feat/backend-recovery-lifecycle`에서 다음 결과를 확인했습니다. 세부 로그와 실행 대상은 [최근 검증 기록](implementation-validation.md#복구파일분산-인증-보완-2026-10-15)이 소유합니다.
 
 - 실제 HTTP 검사 44개가 통과했습니다. 실패와 BLOCKED는 0개입니다. 재가입·나가기 후 현재·종료한 자신의 참여 기간과 최신순 정렬을 포함합니다.
-- DB 없는 단위 검사 8개 파일이 통과했습니다. 단일 AccountController 등록과 생성 SDK의 내 참여 이력 호출을 포함합니다. 이 단위 검사의 인증·DB는 모의 구현입니다.
-- 새 격리 DB에서 보호 조건 8개, DB 제약, 비밀번호 거부·장애와 이관 중간 실패 검사가 통과했습니다. 서버 종료를 확인했습니다.
+- DB 없는 단위 검사 12개 파일이 통과했습니다. 승인 권한·파일 무결성·공유 제한·본문 크기와 기존 회귀를 포함합니다. 이 단위 검사의 인증·DB는 모의 구현입니다.
+- 새 격리 DB에서 보호 조건 12개, DB 제약, 기존 업무 검사와 신규 복구·역이관·파일 수명주기·공유 인증 제한·콘텐츠 물리삭제 검사가 통과했습니다. 서버 종료를 확인했습니다.
 - lint·빌드는 통과했습니다. 별도 Evidence·전체 테스트 타입 검사는 종료 0이고 근거 연결 경고 16개가 남아 있습니다. 빌드 성능 경고 1개도 남아 있습니다.
 - 업무 SDK의 최신 tarball·외부 클라이언트·실기기·운영 복구는 이번 검사의 범위가 아닙니다. 코드 게시 결과는 Git 이력과 원격 브랜치로 확인합니다. 게시 성공은 원격 CI나 운영 수용의 성공을 뜻하지 않습니다.
 

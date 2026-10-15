@@ -1,5 +1,6 @@
 import type { Prisma, report_actions, reports } from "@prisma/sdk";
 import type { tags } from "typia";
+import { randomUUID } from "node:crypto";
 
 import { AuthProvider } from "../auth/AuthProvider";
 import { CommunityProvider } from "../community/CommunityProvider";
@@ -24,12 +25,13 @@ export namespace ReportProvider {
     status: "received" | "reviewing" | "closed";
   }
   export type Status = Receipt["status"];
+  export type ActionCode = "review" | "close" | "hide_post" | "block";
   export interface OperatorQuery {
     status?: Status;
   }
   export interface ActionInput {
     operation_id: string & tags.Format<"uuid">;
-    action_code: "review" | "close" | "hide_post";
+    action_code: Exclude<ActionCode, "block">;
     reason: string;
     expected_status?: Status;
   }
@@ -37,9 +39,9 @@ export namespace ReportProvider {
     id: string;
     report_id: string;
     actor_user_id: string;
-    action_code: ActionInput["action_code"];
+    action_code: ActionCode;
     reason: string;
-    result: { status: Status; post_hidden?: boolean };
+    result: { status: Status; post_hidden?: boolean; already_deleted?: boolean; blocked_id?: string };
   }
   export interface Evidence {
     schema_version: number;
@@ -117,7 +119,7 @@ export namespace ReportProvider {
     id: row.id,
     report_id: row.report_id,
     actor_user_id: row.created_by,
-    action_code: row.action_code as ActionInput["action_code"],
+    action_code: row.action_code as ActionCode,
     reason: row.reason,
     result: row.result as Action["result"],
   });
@@ -172,10 +174,12 @@ export namespace ReportProvider {
           if (row.post_id === null) K.fail(409, "REPORT_TARGET", "게시글 신고만 숨김 처리할 수 있습니다.");
           const post = await tx.posts.findUnique({ where: { id: row.post_id } });
           if (!post) K.fail(404, "NOT_FOUND", "신고 대상 게시글을 찾을 수 없습니다.");
-          if (post.deleted_at === null) await tx.posts.update({ where: { id: post.id }, data: {
+          if (post.deleted_at === null) {
+            await tx.posts.update({ where: { id: post.id }, data: {
             deleted_at: new Date(), deletion_operation_id: input.operation_id, ...K.changed(actorId),
-          } });
-          result = { status: row.status, post_hidden: true };
+            } });
+            result = { status: row.status, post_hidden: true };
+          } else result = { status: row.status, post_hidden: false, already_deleted: true };
         } else {
           if (input.action_code === "review" && row.status !== "received") K.fail(409, "REPORT_STATE", "이미 검토 중인 신고입니다.");
           const status = input.action_code === "review" ? "reviewing" : "closed";
@@ -228,6 +232,7 @@ export namespace ReportProvider {
       if (userId !== null) {
         const user = await tx.users.findFirst({ where: { id: userId, deleted_at: null } });
         if (!user || await K.blocked(tx, actor.id, userId)) K.fail(404, "NOT_FOUND", "신고 대상을 찾을 수 없습니다.");
+        if (user.id.toLowerCase() === actor.id.toLowerCase()) K.fail(400, "SELF_RELATION", "자신을 신고할 수 없습니다.");
         targetId = user.id;
         snapshot = {
           schema_version: 1, handle: user.handle, nickname: user.nickname,
@@ -235,6 +240,7 @@ export namespace ReportProvider {
         };
       } else {
         const post = await CommunityProvider.accessible(tx, actor.id, postId!);
+        if (post.author_id.toLowerCase() === actor.id.toLowerCase()) K.fail(400, "SELF_RELATION", "자신의 게시글은 신고할 수 없습니다.");
         targetId = post.author_id;
         snapshot = { schema_version: 1, author_id: post.author_id, body: post.body, source_updated_at: post.updated_at.toISOString() };
       }
@@ -242,7 +248,14 @@ export namespace ReportProvider {
         reporter_id: actor.id, target_user_id: userId, post_id: postId,
         reason_code: input.reason_code, detail, target_snapshot: snapshot, ...K.audit(actor.id),
       } });
-      if (input.block_target) await SocialProvider.blockIn(tx, actor.id, targetId);
+      if (input.block_target) {
+        const blocked = await SocialProvider.blockIn(tx, actor.id, targetId);
+        await tx.report_actions.create({ data: {
+          id: randomUUID(), report_id: row.id, action_code: "block",
+          reason: detail ?? input.reason_code, result: { status: row.status, blocked_id: blocked.blocked_id },
+          ...K.audit(actor.id),
+        } });
+      }
       return { id: row.id, reporter_id: row.reporter_id, target_user_id: row.target_user_id,
         post_id: row.post_id, reason_code: row.reason_code, detail: row.detail, status: row.status };
     });

@@ -69,7 +69,7 @@ export namespace SocialProvider {
   export async function request(authorization: string | undefined, recipientId: string): Promise<{ status: 200 | 201; value: Request }> {
     return K.transaction(async (tx) => {
       const actorId = await verified(tx, authorization, true);
-      if (recipientId === actorId) K.fail(400, "SELF_RELATION", "자신에게 친구 요청을 보낼 수 없습니다.");
+      if (recipientId.toLowerCase() === actorId.toLowerCase()) K.fail(400, "SELF_RELATION", "자신에게 친구 요청을 보낼 수 없습니다.");
       if (!await tx.users.findFirst({ where: { id: recipientId, deleted_at: null } })) K.fail(404, "NOT_FOUND", "대상을 찾을 수 없습니다.");
       if (await K.blocked(tx, actorId, recipientId)) K.fail(403, "BLOCKED", "차단 관계에서는 요청할 수 없습니다.");
       if (await areFriends(tx, actorId, recipientId)) K.fail(409, "ALREADY_FRIENDS", "이미 친구입니다.");
@@ -137,7 +137,7 @@ export namespace SocialProvider {
 
   // 신고의 선택적 차단도 같은 트랜잭션에서 이 함수를 사용합니다.
   export async function blockIn(tx: K.Tx, actorId: string, userId: string): Promise<{ blocked_id: string }> {
-    if (actorId === userId) K.fail(
+    if (actorId.toLowerCase() === userId.toLowerCase()) K.fail(
       400,
       "SELF_RELATION",
       "자신을 차단할 수 없습니다.",

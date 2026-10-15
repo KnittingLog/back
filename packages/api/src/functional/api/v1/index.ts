@@ -26,6 +26,7 @@ export * as posts from "./posts/index";
 export * as post_comments from "./post_comments/index";
 export * as reports from "./reports/index";
 export * as admin from "./admin/index";
+export * as storage from "./storage/index";
 
 /**
  * @controller CommunityController.feed

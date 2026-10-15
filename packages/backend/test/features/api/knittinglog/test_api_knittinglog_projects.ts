@@ -32,6 +32,20 @@ export async function test_api_knittinglog_project_defaults(connection: K.Connec
   await K.error(owner.connection, "GET", `/projects/${randomUUID()}`, 404);
 }
 
+// V1-405: sort=status orders projects by the caller's workspace status.
+export async function test_api_knittinglog_project_status_sort(connection: K.Connection): Promise<void> {
+  const owner = await K.register(connection);
+  const active = await K.project(owner);
+  const paused = await K.project(owner);
+  const done = await K.project(owner);
+  for (const [project, status] of [[paused, "paused"], [done, "done"]] as const) {
+    const workspace = await K.workspace(owner, project.id);
+    await K.request(owner.connection, "PATCH", `/workspaces/${workspace.id}`, 200, { status });
+  }
+  const ordered = typia.assert<K.Project[]>(await K.request(owner.connection, "GET", "/projects?sort=status", 200), K.invalidResponse);
+  assert.deepEqual(ordered.slice(0, 3).map((entry) => entry.id), [active.id, paused.id, done.id]);
+}
+
 // V1-403, DB-FK-005: 거부된 동시 생성·초대 요청은 프로젝트를 남기지 않습니다.
 export async function test_api_knittinglog_project_invitation_atomicity(connection: K.Connection): Promise<void> {
   const [owner, friend, nonfriend] = await Promise.all([K.register(connection), K.register(connection), K.register(connection)]);
@@ -67,6 +81,10 @@ export async function test_api_knittinglog_concurrent_invitation_acceptance(conn
   assert.equal(accepted[0]!.id, accepted[1]!.id);
   const memberships = typia.assert<K.Membership[]>(await K.request(owner.connection, "GET", `/projects/${project.id}/memberships`, 200), K.invalidResponse);
   assert.equal(memberships.filter((entry) => entry.user_id === member.session.user.id && entry.left_at === null).length, 1);
+  const allInvitations = typia.assert<K.Invitation[]>(await K.request(member.connection, "GET", "/project-invitations", 200), K.invalidResponse);
+  assert.ok(!allInvitations.some((entry) => entry.id === invitation.id), "필터가 없으면 유효한 초대만 반환합니다.");
+  const acceptedInvitations = typia.assert<K.Invitation[]>(await K.request(member.connection, "GET", "/project-invitations?status=accepted", 200), K.invalidResponse);
+  assert.ok(acceptedInvitations.some((entry) => entry.id === invitation.id), "명시 상태 필터는 유지합니다.");
   const workspace = await K.workspace(member, project.id);
   assert.equal((await K.counters(member, workspace.id)).length, 2);
   await K.request(member.connection, "PATCH", "/users/me", 200, { visibility: "private" });

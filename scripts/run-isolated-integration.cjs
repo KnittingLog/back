@@ -125,6 +125,10 @@ async function main() {
     for (const [label, file] of [
       ["guard-password-screening-directory", "test/integration/password-screening.ts"],
       ["guard-transfer-rollback-directory", "test/integration/transfer-rollback.ts"],
+      ["guard-recovery-lifecycle-directory", "test/integration/recovery-lifecycle.ts"],
+      ["guard-storage-lifecycle-directory", "test/integration/storage-lifecycle.ts"],
+      ["guard-auth-attempts-directory", "test/integration/auth-attempts.ts"],
+      ["guard-content-purge-directory", "test/integration/content-purge.ts"],
     ]) {
       const output = await run(label, process.execPath, [path.join(root, "scripts/ttsc-cache.cjs"), "ttsx", "--project", "test/tsconfig.json", file], {
         env: { ...env, KNITTINGLOG_TEST_DATA_DIRECTORY: "/private/tmp/knittinglog-tdd.invalid/postgres" }, codes: [1],
@@ -144,6 +148,10 @@ async function main() {
       ["policy-gates", "test/integration/policy-gates.ts"],
       ["password-screening", "test/integration/password-screening.ts"],
       ["transfer-rollback", "test/integration/transfer-rollback.ts"],
+      ["recovery-lifecycle", "test/integration/recovery-lifecycle.ts"],
+      ["storage-lifecycle", "test/integration/storage-lifecycle.ts"],
+      ["auth-attempts", "test/integration/auth-attempts.ts"],
+      ["content-purge", "test/integration/content-purge.ts"],
       ["isolated-api", "test/isolated-api.ts"],
     ]) {
       const output = await run(label, process.execPath, [path.join(root, "scripts/ttsc-cache.cjs"), "ttsx", "--project", "test/tsconfig.json", file]);

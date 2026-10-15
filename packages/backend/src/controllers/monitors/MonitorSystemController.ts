@@ -20,28 +20,10 @@ export class MonitorSystemController {
   public async get(): Promise<ISystem> {
     return {
       uid: SystemProvider.uid,
-      arguments: process.argv,
       commit: await SystemProvider.commit(),
       package: await SystemProvider.package(),
       created_at: DateUtil.toString(SystemProvider.created_at, true),
     };
   }
 
-  /**
-   * @internal
-   */
-  @core.TypedRoute.Get("internal_server_error")
-  public async internal_server_error(): Promise<void> {
-    throw new Error("The manual 500 error for the testing.");
-  }
-
-  /**
-   * @internal
-   */
-  @core.TypedRoute.Get("uncaught_exception")
-  public uncaught_exception(): void {
-    new Promise(() => {
-      throw new Error("The manul uncaught exception for the testing.");
-    }).catch(() => {});
-  }
 }

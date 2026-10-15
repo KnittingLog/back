@@ -1,9 +1,53 @@
+import type { tags } from "typia";
+
 export namespace AccountProvider {
   export type Update = {
     handle?: undefined | string;
     nickname?: undefined | string;
     biography?: null | undefined | string;
     visibility?: undefined | "friends" | "private" | "public";
+    profile_photo_object_id?:
+      | null
+      | undefined
+      | (string &
+          tags.TagBase<{
+            target: "string";
+            kind: "format";
+            value: "uuid";
+            validate: '$importInternal("isFormatUuid")($input)';
+            exclusive: ["format", "pattern"];
+            schema: {
+              format: "uuid";
+            };
+          }>);
+  };
+  export type WithdrawInput = {
+    successors?:
+      | undefined
+      | {
+          project_id: string &
+            tags.TagBase<{
+              target: "string";
+              kind: "format";
+              value: "uuid";
+              validate: '$importInternal("isFormatUuid")($input)';
+              exclusive: ["format", "pattern"];
+              schema: {
+                format: "uuid";
+              };
+            }>;
+          successor_user_id: string &
+            tags.TagBase<{
+              target: "string";
+              kind: "format";
+              value: "uuid";
+              validate: '$importInternal("isFormatUuid")($input)';
+              exclusive: ["format", "pattern"];
+              schema: {
+                format: "uuid";
+              };
+            }>;
+        }[];
   };
   export type PolicyConsentInput = { policy_document_ids: string[] };
   export type Membership = {

@@ -11,7 +11,7 @@ export async function test_api_knittinglog_record_sources(connection: K.Connecti
   const workspace = await K.workspace(actor, project.id);
   const manual = await K.record(actor, workspace.id, 60);
   const timer = typia.assert<K.Record>(await K.request(actor.connection, "POST", `/workspaces/${workspace.id}/records`, 201, {
-    source: "timer", body: null, duration_seconds: 35, recorded_at: new Date().toISOString(),
+    operation_id: randomUUID(), source: "timer", body: null, duration_seconds: 35, recorded_at: new Date().toISOString(),
   }), K.invalidResponse);
   assert.equal(manual.source, "manual");
   assert.equal(manual.author_id, actor.session.user.id);
@@ -92,7 +92,7 @@ export async function test_api_knittinglog_record_interactions(connection: K.Con
   await K.join(owner, member, project.id);
   const workspace = await K.workspace(member, project.id);
   const record = await K.record(member, workspace.id);
-  const comment = typia.assert<K.Comment>(await K.request(owner.connection, "POST", `/records/${record.id}/comments`, 201, { body: "다른 멤버의 댓글" }), K.invalidResponse);
+  const comment = typia.assert<K.Comment>(await K.request(owner.connection, "POST", `/records/${record.id}/comments`, 201, { operation_id: randomUUID(), body: "다른 멤버의 댓글" }), K.invalidResponse);
   assert.equal(comment.author_id, owner.session.user.id);
   await K.error(member.connection, "DELETE", `/record-comments/${comment.id}`, 403);
   await K.request(owner.connection, "DELETE", `/record-comments/${comment.id}`, 204);
@@ -109,4 +109,36 @@ export async function test_api_knittinglog_record_interactions(connection: K.Con
   const remaining = typia.assert<K.Reaction[]>(await K.request(member.connection, "GET", `/records/${record.id}/reactions`, 200), K.invalidResponse);
   assert.equal(remaining.length, 0);
   await K.error(owner.connection, "PUT", `/records/${record.id}/reactions/unknown`, 400);
+}
+
+export async function test_api_knittinglog_record_command_idempotency(connection: K.Connection): Promise<void> {
+  const actor = await K.register(connection);
+  const project = await K.project(actor);
+  const workspace = await K.workspace(actor, project.id);
+  const operation_id = randomUUID();
+  const input = { operation_id, source: "manual", body: "재시도 기록", duration_seconds: 12, recorded_at: new Date().toISOString() };
+  const created = await K.request(actor.connection, "POST", `/workspaces/${workspace.id}/records`, 201, input);
+  assert.deepEqual(await K.request(actor.connection, "POST", `/workspaces/${workspace.id}/records`, 201, input), created);
+  await K.error(actor.connection, "POST", `/workspaces/${workspace.id}/records`, 409, { ...input, body: "다른 입력" });
+  const record = typia.assert<K.Record>(created, K.invalidResponse);
+  const commentInput = { operation_id: randomUUID(), body: "재시도 댓글" };
+  const comment = await K.request(actor.connection, "POST", `/records/${record.id}/comments`, 201, commentInput);
+  assert.deepEqual(await K.request(actor.connection, "POST", `/records/${record.id}/comments`, 201, commentInput), comment);
+  await K.error(actor.connection, "POST", `/records/${record.id}/comments`, 409, { ...commentInput, body: "다른 댓글" });
+}
+
+export async function test_api_knittinglog_done_record_interactions_keep_version(connection: K.Connection): Promise<void> {
+  const [owner, member] = await Promise.all([K.register(connection), K.register(connection)]);
+  await K.befriend(owner, member);
+  const project = await K.project(owner);
+  await K.join(owner, member, project.id);
+  const workspace = await K.workspace(owner, project.id);
+  const record = await K.record(owner, workspace.id);
+  const done = typia.assert<K.Workspace>(await K.request(owner.connection, "PATCH", `/workspaces/${workspace.id}`, 200, { status: "done" }), K.invalidResponse);
+  await K.request(member.connection, "POST", `/records/${record.id}/comments`, 201, { operation_id: randomUUID(), body: "완료 후 댓글" });
+  await K.request(member.connection, "PUT", `/records/${record.id}/reactions/like`, 200);
+  await K.request(member.connection, "PUT", `/records/${record.id}/reactions/like`, 200);
+  const unchanged = await K.workspace(owner, project.id);
+  assert.equal(unchanged.version, done.version);
+  await K.error(owner.connection, "POST", `/workspaces/${workspace.id}/timer/start`, 409, { operation_id: randomUUID(), expected_version: done.version });
 }

@@ -4,16 +4,22 @@ import {
   VersioningType,
 } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
-import type { NextFunction, Request, Response } from "express";
+import express, { type NextFunction, type Request, type Response } from "express";
 import { MyConfiguration } from "./MyConfiguration";
 import { MyModule } from "./MyModule";
 import { MyGlobal } from "./MyGlobal";
 import { KnittingLogExceptionFilter } from "./controllers/common/KnittingLogExceptionFilter";
+import { configureStorageFromEnvironment } from "./providers/storage/StorageBootstrap";
 
 export class MyBackend {
   private application_?: INestApplication;
 
   public static configure(application: INestApplication): void {
+    // 이 경로에만 큰 JSON 제한을 먼저 등록합니다. Nest 기본 제한은 다른 API에 유지합니다.
+    const storageJsonParser = express.json({ limit: "14mb" });
+    application.use("/api/v1/storage/objects", function storageObjectJsonParser(request: Request, response: Response, next: NextFunction): void {
+      storageJsonParser(request, response, next);
+    });
     application.setGlobalPrefix("api", {
       exclude: [{ path: "monitors/{*path}", method: RequestMethod.ALL }],
     });
@@ -35,6 +41,7 @@ export class MyBackend {
   }
 
   public async open(): Promise<void> {
+    await configureStorageFromEnvironment(MyGlobal.mode);
     // MOUNT CONTROLLERS
     this.application_ = await NestFactory.create(MyModule, { logger: false });
 

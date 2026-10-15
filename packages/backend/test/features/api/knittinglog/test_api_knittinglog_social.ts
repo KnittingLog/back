@@ -46,7 +46,9 @@ export async function test_api_knittinglog_shared_project_blocks(connection: K.C
   assert.equal(hiddenComments.length, 0);
   assert.equal(hiddenReactions.length, 0);
   const memberships = typia.assert<K.Membership[]>(await K.request(owner.connection, "GET", `/projects/${project.id}/memberships`, 200), K.invalidResponse);
-  assert.equal(memberships.length, 2, "차단은 공동 프로젝트 참여를 종료하지 않습니다.");
+  assert.equal(memberships.length, 1, "차단한 참여자는 목록에서 숨깁니다.");
+  const memberMemberships = typia.assert<K.Membership[]>(await K.request(member.connection, "GET", `/projects/${project.id}/memberships`, 200), K.invalidResponse);
+  assert.ok(memberMemberships.some((entry) => entry.user_id === member.session.user.id && entry.left_at === null), "차단은 참여를 종료하지 않습니다.");
   const memberInvitations = typia.assert<K.Invitation[]>(await K.request(member.connection, "GET", "/project-invitations?status=pending", 200), K.invalidResponse);
   assert.ok(!memberInvitations.some((entry) => entry.project_id === anotherProject.id));
   const thirdInvitations = typia.assert<K.Invitation[]>(await K.request(third.connection, "GET", "/project-invitations?status=pending", 200), K.invalidResponse);

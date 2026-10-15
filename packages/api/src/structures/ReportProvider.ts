@@ -70,11 +70,13 @@ export namespace ReportProvider {
     id: string;
     report_id: string;
     actor_user_id: string;
-    action_code: "close" | "hide_post" | "review";
+    action_code: "block" | "close" | "hide_post" | "review";
     reason: string;
     result: {
       status: "closed" | "received" | "reviewing";
       post_hidden?: undefined | boolean;
+      already_deleted?: undefined | boolean;
+      blocked_id?: undefined | string;
     };
   };
   export type ActionInput = {

@@ -96,7 +96,10 @@ export async function list(
 }
 export namespace list {
   export type Props = { query: Query };
-  export type Query = { status?: undefined | "active" | "done" | "paused" };
+  export type Query = {
+    status?: undefined | "active" | "done" | "paused";
+    sort?: undefined | "status";
+  };
   export type Output = ProjectProvider.Project[];
 
   export const METADATA = {

@@ -1011,6 +1011,34 @@ model system_principals {
   @@schema("accounts")
 }
 
+/// 로그인과 계정 복구 시도를 프로세스 간 공유하는 제한 창입니다.
+/// @namespace 계정
+model auth_attempt_limits {
+  /// 제한 창의 서버 생성 UUID입니다.
+  id                String    @id(map: "pk_auth_attempt_limits") @default(uuid()) @db.Uuid
+  /// 동작 종류와 정규화한 식별자를 결합한 SHA-256 값입니다.
+  attempt_key       String    @unique(map: "ux_auth_attempt_limits_key") @db.Char(64)
+  /// 현재 창에서 허용 횟수를 넘지 않도록 제한한 시도 수입니다.
+  attempt_count     Int
+  /// DB 시각으로 시작한 10분 제한 창입니다.
+  window_started_at DateTime  @db.Timestamptz(3)
+  /// 창 만료 시각입니다. 만료 행은 정리 작업에서 삭제합니다.
+  expires_at        DateTime  @db.Timestamptz(3)
+  /// 행 생성 시각입니다.
+  created_at        DateTime  @default(now()) @db.Timestamptz(3)
+  /// 고정 시스템 감사 주체입니다.
+  created_by        String    @db.Uuid
+  /// 최근 변경 시각입니다.
+  updated_at        DateTime  @default(now()) @db.Timestamptz(3)
+  /// 최근 변경 시스템 감사 주체입니다.
+  updated_by        String    @db.Uuid
+  /// 소프트 삭제 시각입니다. 제한 상태에서는 사용하지 않습니다.
+  deleted_at        DateTime? @db.Timestamptz(3)
+
+  @@index([expires_at, id], map: "ix_auth_attempt_limits_expires")
+  @@schema("accounts")
+}
+
 /// 트랜잭션을 완료한 명령의 재시도 결과입니다. 업무 변경과 같은 트랜잭션에 저장합니다.
 /// 작업 식별자가 같고 입력 해시가 다르면 충돌로 거부합니다. 실패한 트랜잭션은 남기지 않습니다.
 /// @namespace 계정
