@@ -35,8 +35,9 @@ export class AccountController {
   @core.TypedRoute.Delete("me")
   public withdraw(
     @Headers("authorization") authorization: string | undefined,
+    @core.TypedBody() input?: AccountProvider.WithdrawInput,
   ): Promise<void> {
-    return AccountProvider.withdraw(authorization);
+    return AccountProvider.withdraw(authorization, input);
   }
 
   @core.TypedRoute.Get("me/policy-consents")

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import typia from "typia";
 
+import { MyGlobal } from "../../../../src/MyGlobal";
 import { KnittingLogApi as K } from "../../../helpers/KnittingLogApi";
 
 // V1-101~104, V1-108: 고유 계정과 정책 버전 동의를 검증합니다.
@@ -55,6 +56,60 @@ export async function test_api_knittinglog_account_withdrawal(connection: K.Conn
   });
   await K.error(connection, "POST", "/auth/register", 409, { ...actor.input, handle: K.identifier() });
   await K.error(connection, "POST", "/auth/register", 409, { ...actor.input, login_id: K.identifier() });
+}
+
+export async function test_api_knittinglog_account_withdrawal_successor(connection: K.Connection): Promise<void> {
+  const owner = await K.register(connection);
+  const member = await K.register(connection);
+  await K.befriend(owner, member);
+  const project = await K.project(owner);
+  await K.join(owner, member, project.id);
+  await K.request(owner.connection, "DELETE", "/users/me", 204, {
+    successors: [{ project_id: project.id, successor_user_id: member.session.user.id }],
+  });
+  const handedOff = typia.assert<K.Project>(await K.request(member.connection, "GET", `/projects/${project.id}`, 200), K.invalidResponse);
+  assert.equal(handedOff.owner_user_id, member.session.user.id);
+  await K.error(owner.connection, "GET", "/users/me", 401);
+}
+
+export async function test_api_knittinglog_account_withdrawal_ignores_pending_policy(connection: K.Connection): Promise<void> {
+  const owner = await K.register(connection);
+  const member = await K.register(connection);
+  await K.befriend(owner, member);
+  const project = await K.project(owner);
+  await K.join(owner, member, project.id);
+  const now = new Date();
+  const policy = await MyGlobal.prisma.policy_documents.create({ data: {
+    code: `qa_withdraw_${randomUUID().replaceAll("-", "")}`,
+    version: "v1",
+    title: "탈퇴 정책 검사",
+    body: "테스트 전용",
+    effective_at: now,
+    requires_reconsent: true,
+    created_by: owner.session.user.id,
+    updated_by: owner.session.user.id,
+  } });
+  try {
+    await K.request(owner.connection, "DELETE", "/users/me", 204, {
+      successors: [{ project_id: project.id, successor_user_id: member.session.user.id }],
+    });
+  } finally {
+    await MyGlobal.prisma.policy_documents.update({ where: { id: policy.id }, data: { deleted_at: new Date() } });
+  }
+}
+
+export async function test_api_knittinglog_account_withdrawal_invalid_successor_is_atomic(connection: K.Connection): Promise<void> {
+  const owner = await K.register(connection);
+  const member = await K.register(connection);
+  await K.befriend(owner, member);
+  const project = await K.project(owner);
+  await K.join(owner, member, project.id);
+  await K.error(owner.connection, "DELETE", "/users/me", 400, {
+    successors: [{ project_id: project.id, successor_user_id: randomUUID() }],
+  });
+  const unchanged = typia.assert<K.Project>(await K.request(owner.connection, "GET", `/projects/${project.id}`, 200), K.invalidResponse);
+  assert.equal(unchanged.owner_user_id, owner.session.user.id);
+  await K.request(owner.connection, "GET", "/users/me", 200);
 }
 
 // V1-201~203, V1-206: 공개 ID와 소개는 변경할 수 있지만 감사 주체는 입력할 수 없습니다.

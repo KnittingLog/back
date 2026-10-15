@@ -16,6 +16,9 @@ export namespace AccountProvider {
   export interface PolicyConsentInput {
     policy_document_ids: string[];
   }
+  export interface WithdrawInput {
+    successors?: { project_id: string & tags.Format<"uuid">; successor_user_id: string & tags.Format<"uuid"> }[];
+  }
   export interface Membership {
     id: string;
     project_id: string;
@@ -188,16 +191,33 @@ export namespace AccountProvider {
     }));
   }
 
-  export function withdraw(authorization?: string): Promise<void> {
+  export function withdraw(authorization: string | undefined, input?: WithdrawInput): Promise<void> {
+    if (input) K.keys(input, ["successors"]);
+    for (const successor of input?.successors ?? []) K.keys(successor, ["project_id", "successor_user_id"]);
     return K.transaction(async (tx) => {
       const actor = await AuthProvider.actor(authorization, tx);
       const owned = await tx.projects.findMany({ where: { owner_user_id: actor.id, deleted_at: null, terminated_at: null } });
+      const successors = new Map((input?.successors ?? []).map((entry) => [entry.project_id, entry.successor_user_id]));
+      if (successors.size !== (input?.successors ?? []).length)
+        K.fail(400, "INVALID_SUCCESSOR", "프로젝트별 후임은 한 명만 지정할 수 있습니다.");
+      const handoffs: { project_id: string; successor_user_id: string }[] = [];
       for (const project of owned) {
-        const others = await tx.project_memberships.count({ where: { project_id: project.id, user_id: { not: actor.id }, left_at: null, deleted_at: null } });
-        if (others) K.fail(409, "SUCCESSOR_REQUIRED", "방장 후임을 먼저 지정해야 합니다.");
+        const members = await tx.project_memberships.findMany({ where: { project_id: project.id, user_id: { not: actor.id }, left_at: null, deleted_at: null } });
+        if (!members.length) continue;
+        const successorId = successors.get(project.id);
+        if (!successorId) K.fail(409, "SUCCESSOR_REQUIRED", "방장 후임을 지정해야 합니다.");
+        if (!members.some((membership) => membership.user_id === successorId) ||
+            !await tx.users.findFirst({ where: { id: successorId, deleted_at: null } }))
+          K.fail(400, "INVALID_SUCCESSOR", "현재 참여 중인 유효한 사용자를 후임으로 지정해야 합니다.");
+        handoffs.push({ project_id: project.id, successor_user_id: successorId });
       }
+      if ([...successors.keys()].some((id) => !handoffs.some((handoff) => handoff.project_id === id)))
+        K.fail(400, "INVALID_SUCCESSOR", "후임을 지정할 수 없는 프로젝트가 포함되어 있습니다.");
       const now = new Date();
-      await tx.projects.updateMany({ where: { id: { in: owned.map((row) => row.id) } }, data: { terminated_at: now, ...K.changed(actor.id) } });
+      for (const handoff of handoffs)
+        await tx.projects.update({ where: { id: handoff.project_id }, data: { owner_user_id: handoff.successor_user_id, ...K.changed(actor.id) } });
+      const terminated = owned.filter((project) => !handoffs.some((handoff) => handoff.project_id === project.id));
+      await tx.projects.updateMany({ where: { id: { in: terminated.map((row) => row.id) } }, data: { terminated_at: now, ...K.changed(actor.id) } });
       await tx.project_memberships.updateMany({ where: { user_id: actor.id, left_at: null, deleted_at: null }, data: { left_at: now, ...K.changed(actor.id) } });
       await tx.auth_sessions.updateMany({ where: { user_id: actor.id, revoked_at: null }, data: { revoked_at: now, ...K.changed(actor.id) } });
       await tx.recovery_codes.updateMany({ where: { user_id: actor.id, revoked_at: null }, data: { revoked_at: now, ...K.changed(actor.id) } });

@@ -21,6 +21,34 @@ export namespace AccountProvider {
             };
           }>);
   };
+  export type WithdrawInput = {
+    successors?:
+      | undefined
+      | {
+          project_id: string &
+            tags.TagBase<{
+              target: "string";
+              kind: "format";
+              value: "uuid";
+              validate: '$importInternal("isFormatUuid")($input)';
+              exclusive: ["format", "pattern"];
+              schema: {
+                format: "uuid";
+              };
+            }>;
+          successor_user_id: string &
+            tags.TagBase<{
+              target: "string";
+              kind: "format";
+              value: "uuid";
+              validate: '$importInternal("isFormatUuid")($input)';
+              exclusive: ["format", "pattern"];
+              schema: {
+                format: "uuid";
+              };
+            }>;
+        }[];
+  };
   export type PolicyConsentInput = { policy_document_ids: string[] };
   export type Membership = {
     id: string;
