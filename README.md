@@ -6,6 +6,8 @@
 
 - [요구사항](docs/requirements.md)
 - [구현 현황과 추가 작업 명세](docs/implementation-status.md)
+- [복구·파일·분산 인증 제한 구현 범위](docs/backend-completion-plan.md)
+- [복구와 파일 수명주기 실행 경계](docs/backend-maintenance.md)
 - [구현 검증 기록](docs/implementation-validation.md)
 - [미결 사항](docs/open-questions.md)
 - [초기 기반 코드 검증 이력](docs/verification.md)
