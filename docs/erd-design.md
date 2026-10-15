@@ -21,6 +21,7 @@
 | accounts | users, auth_sessions | V1-101~106, V1-109~110, V1-201~208 |
 | accounts | user_identifiers, recovery_codes, system_principals, command_receipts | 6.2 명령 재시도, 6.3 식별자 예약·계정 복구·감사 주체 |
 | accounts | policy_documents, policy_consents | V1-104, V1-108 |
+| accounts | auth_attempt_limits | 로그인과 계정 복구 시도의 프로세스 간 제한 창 |
 | accounts | stored_objects | 프로필 사진·대표 사진 보존, DB-DS-005 |
 | social | friend_requests, friendships, user_blocks | V1-301~306, V1-902~903 |
 | projects | projects, project_memberships, project_invitations | V1-401~409, V1-501~508 |

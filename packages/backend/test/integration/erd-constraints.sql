@@ -32,7 +32,7 @@ BEGIN
       WHERE c.contype = 'f' AND n.nspname IN ('accounts', 'social', 'projects', 'community')) <> 0
   THEN RAISE EXCEPTION '물리 FK가 있습니다'; END IF;
   IF (SELECT count(*) FROM pg_constraint c JOIN pg_namespace n ON n.oid = c.connamespace
-      WHERE c.contype = 'c' AND n.nspname IN ('accounts', 'social', 'projects', 'community')) <> 34
+      WHERE c.contype = 'c' AND n.nspname IN ('accounts', 'social', 'projects', 'community')) <> 35
   THEN RAISE EXCEPTION 'CHECK 개수가 다릅니다'; END IF;
 END $$;
 
@@ -41,96 +41,101 @@ INSERT INTO fixtures SELECT name, gen_random_uuid() FROM unnest(ARRAY[
   'users', 'user_identifiers', 'policy_documents', 'command_receipts', 'stored_objects',
   'friend_requests', 'friendships', 'user_blocks', 'projects', 'project_memberships',
   'project_invitations', 'project_workspaces', 'project_counters', 'project_records',
-  'project_timers', 'workspace_transfers', 'record_comments', 'posts', 'post_comments', 'reports'
+  'project_timers', 'workspace_transfers', 'record_comments', 'posts', 'post_comments', 'reports',
+  'auth_attempt_limits'
 ]) AS name;
 
 -- 행 내부 제약만 검사합니다. 아래 가짜 참조는 업무 관계 검증의 증거가 아닙니다.
 DO $$
-DECLARE r record; actor uuid := gen_random_uuid();
+DECLARE v_row record; v_actor uuid := gen_random_uuid();
 BEGIN
-  FOR r IN SELECT * FROM fixtures LOOP
-    CASE r.model
+  FOR v_row IN SELECT * FROM fixtures LOOP
+    CASE v_row.model
+      WHEN 'auth_attempt_limits' THEN
+        INSERT INTO accounts.auth_attempt_limits(id,attempt_key,attempt_count,window_started_at,expires_at,created_by,updated_by)
+          VALUES(v_row.id,repeat('a',64),1,now(),now() + interval '10 minutes',v_actor,v_actor);
       WHEN 'users' THEN
         INSERT INTO accounts.users(id, login_id, handle, nickname, password_hash, created_by, updated_by)
-          VALUES(r.id, 'qa_' || substr(replace(r.id::text, '-', ''),1,24), 'qa_' || substr(replace(r.id::text, '-', ''),1,24), '검증 사용자', '검증 해시', actor, actor);
+          VALUES(v_row.id, 'qa_' || substr(replace(v_row.id::text, '-', ''),1,24), 'qa_' || substr(replace(v_row.id::text, '-', ''),1,24), '검증 사용자', '검증 해시', v_actor, v_actor);
       WHEN 'user_identifiers' THEN
         INSERT INTO accounts.user_identifiers(id,user_id,kind,value,created_by,updated_by)
-          VALUES(r.id,actor,'handle','qa_' || substr(replace(r.id::text, '-', ''),1,24),actor,actor);
+          VALUES(v_row.id,v_actor,'handle','qa_' || substr(replace(v_row.id::text, '-', ''),1,24),v_actor,v_actor);
       WHEN 'policy_documents' THEN
         INSERT INTO accounts.policy_documents(id,code,version,title,body,effective_at,created_by,updated_by)
-          VALUES(r.id,'qa_' || r.id::text,'1','검증 정책','검증 본문',now(),actor,actor);
+          VALUES(v_row.id,'qa_' || v_row.id::text,'1','검증 정책','검증 본문',now(),v_actor,v_actor);
       WHEN 'command_receipts' THEN
         INSERT INTO accounts.command_receipts(id,actor_user_id,command_type,request_hash,result,created_by,updated_by)
-          VALUES(r.id,actor,'qa_constraint',repeat('a',64),'{}',actor,actor);
+          VALUES(v_row.id,v_actor,'qa_constraint',repeat('a',64),'{}',v_actor,v_actor);
       WHEN 'stored_objects' THEN
         INSERT INTO accounts.stored_objects(id,owner_user_id,storage_code,object_key,sha256,byte_size,created_by,updated_by)
-          VALUES(r.id,actor,'qa_constraint',r.id::text,repeat('a',64),0,actor,actor);
+          VALUES(v_row.id,v_actor,'qa_constraint',v_row.id::text,repeat('a',64),0,v_actor,v_actor);
       WHEN 'friend_requests' THEN
         INSERT INTO social.friend_requests(id,sender_id,recipient_id,created_by,updated_by)
-          VALUES(r.id,actor,gen_random_uuid(),actor,actor);
+          VALUES(v_row.id,v_actor,gen_random_uuid(),v_actor,v_actor);
       WHEN 'friendships' THEN
         INSERT INTO social.friendships(id,user_low_id,user_high_id,created_by,updated_by)
-          VALUES(r.id,'10000000-0000-0000-0000-000000000000','20000000-0000-0000-0000-000000000000',actor,actor);
+          VALUES(v_row.id,'10000000-0000-0000-0000-000000000000','20000000-0000-0000-0000-000000000000',v_actor,v_actor);
       WHEN 'user_blocks' THEN
         INSERT INTO social.user_blocks(id,blocker_id,blocked_id,created_by,updated_by)
-          VALUES(r.id,actor,gen_random_uuid(),actor,actor);
+          VALUES(v_row.id,v_actor,gen_random_uuid(),v_actor,v_actor);
       WHEN 'projects' THEN
         INSERT INTO projects.projects(id,owner_user_id,name,created_by,updated_by)
-          VALUES(r.id,actor,'검증 프로젝트',actor,actor);
+          VALUES(v_row.id,v_actor,'검증 프로젝트',v_actor,v_actor);
       WHEN 'project_memberships' THEN
         INSERT INTO projects.project_memberships(id,project_id,user_id,created_by,updated_by)
-          VALUES(r.id,gen_random_uuid(),actor,actor,actor);
+          VALUES(v_row.id,gen_random_uuid(),v_actor,v_actor,v_actor);
       WHEN 'project_invitations' THEN
         INSERT INTO projects.project_invitations(id,project_id,sender_id,recipient_id,created_by,updated_by)
-          VALUES(r.id,gen_random_uuid(),actor,gen_random_uuid(),actor,actor);
+          VALUES(v_row.id,gen_random_uuid(),v_actor,gen_random_uuid(),v_actor,v_actor);
       WHEN 'project_workspaces' THEN
         INSERT INTO projects.project_workspaces(id,project_id,owner_user_id,created_by,updated_by)
-          VALUES(r.id,gen_random_uuid(),actor,actor,actor);
+          VALUES(v_row.id,gen_random_uuid(),v_actor,v_actor,v_actor);
       WHEN 'project_counters' THEN
         INSERT INTO projects.project_counters(id,workspace_id,name,created_by,updated_by)
-          VALUES(r.id,gen_random_uuid(),'검증 카운터',actor,actor);
+          VALUES(v_row.id,gen_random_uuid(),'검증 카운터',v_actor,v_actor);
       WHEN 'project_records' THEN
         INSERT INTO projects.project_records(id,workspace_id,author_id,source,duration_seconds,recorded_at,created_by,updated_by)
-          VALUES(r.id,gen_random_uuid(),actor,'manual',0,now(),actor,actor);
+          VALUES(v_row.id,gen_random_uuid(),v_actor,'manual',0,now(),v_actor,v_actor);
       WHEN 'project_timers' THEN
         INSERT INTO projects.project_timers(id,workspace_id,owner_user_id,started_at,created_by,updated_by)
-          VALUES(r.id,gen_random_uuid(),actor,now(),actor,actor);
+          VALUES(v_row.id,gen_random_uuid(),v_actor,now(),v_actor,v_actor);
       WHEN 'workspace_transfers' THEN
         INSERT INTO projects.workspace_transfers(id,workspace_id,from_project_id,to_project_id,from_membership_id,to_membership_id,workspace_version,created_by,updated_by)
-          VALUES(r.id,gen_random_uuid(),gen_random_uuid(),gen_random_uuid(),gen_random_uuid(),gen_random_uuid(),1,actor,actor);
+          VALUES(v_row.id,gen_random_uuid(),gen_random_uuid(),gen_random_uuid(),gen_random_uuid(),gen_random_uuid(),1,v_actor,v_actor);
       WHEN 'record_comments' THEN
         INSERT INTO projects.record_comments(id,record_id,author_id,body,created_by,updated_by)
-          VALUES(r.id,gen_random_uuid(),actor,'검증 댓글',actor,actor);
+          VALUES(v_row.id,gen_random_uuid(),v_actor,'검증 댓글',v_actor,v_actor);
       WHEN 'posts' THEN
         INSERT INTO community.posts(id,author_id,body,created_by,updated_by)
-          VALUES(r.id,actor,'검증 게시글',actor,actor);
+          VALUES(v_row.id,v_actor,'검증 게시글',v_actor,v_actor);
       WHEN 'post_comments' THEN
         INSERT INTO community.post_comments(id,post_id,author_id,body,created_by,updated_by)
-          VALUES(r.id,gen_random_uuid(),actor,'검증 댓글',actor,actor);
+          VALUES(v_row.id,gen_random_uuid(),v_actor,'검증 댓글',v_actor,v_actor);
       WHEN 'reports' THEN
         INSERT INTO community.reports(id,reporter_id,target_user_id,reason_code,target_snapshot,created_by,updated_by)
-          VALUES(r.id,actor,gen_random_uuid(),'spam','{}',actor,actor);
+          VALUES(v_row.id,v_actor,gen_random_uuid(),'spam','{}',v_actor,v_actor);
     END CASE;
   END LOOP;
 END $$;
 
-CREATE FUNCTION pg_temp.expect_failure(statement text, expected_state text, expected_constraint text)
+CREATE FUNCTION pg_temp.fn_expect_failure(p_statement text, p_expected_state text, p_expected_constraint text)
 RETURNS void LANGUAGE plpgsql AS $$
-DECLARE actual_state text; actual_constraint text;
+DECLARE v_actual_state text; v_actual_constraint text;
 BEGIN
   BEGIN
-    EXECUTE statement;
+    EXECUTE p_statement;
   EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS actual_state = RETURNED_SQLSTATE, actual_constraint = CONSTRAINT_NAME;
+    GET STACKED DIAGNOSTICS v_actual_state = RETURNED_SQLSTATE, v_actual_constraint = CONSTRAINT_NAME;
   END;
-  IF actual_state IS DISTINCT FROM expected_state OR actual_constraint IS DISTINCT FROM expected_constraint
-  THEN RAISE EXCEPTION '제약 거부 결과 불일치: %', expected_constraint; END IF;
+  IF v_actual_state IS DISTINCT FROM p_expected_state OR v_actual_constraint IS DISTINCT FROM p_expected_constraint
+  THEN RAISE EXCEPTION '제약 거부 결과 불일치: %', p_expected_constraint; END IF;
 END $$;
 
 DO $$
-DECLARE r record; statement text; checks integer := 0; table_name text;
+DECLARE v_row record; v_statement text; v_checks integer := 0; v_table_name text;
 BEGIN
-  FOR r IN SELECT * FROM (VALUES
+  FOR v_row IN SELECT * FROM (VALUES
+    ('accounts','auth_attempt_limits','attempt_count = 0','ck_auth_attempt_limits_window'),
     ('accounts','users','auth_version = -1','ck_users_auth_version'),
     ('accounts','users','deleted_at = now()','ck_users_erasure'),
     ('accounts','users','nickname = NULL','ck_users_active_secrets'),
@@ -159,38 +164,38 @@ BEGIN
     ('community','reports','reason_code = ''other''','ck_reports_other_detail'),
     ('community','reports','status = ''closed''','ck_reports_closed_time')
   ) AS cases(namespace,model,changes,constraint_name) LOOP
-    statement := format('UPDATE %I.%I SET %s WHERE id = (SELECT id FROM fixtures WHERE model = %L)',r.namespace,r.model,r.changes,r.model);
-    PERFORM pg_temp.expect_failure(statement,'23514',r.constraint_name);
-    checks := checks + 1;
+    v_statement := format('UPDATE %I.%I SET %s WHERE id = (SELECT id FROM fixtures WHERE model = %L)',v_row.namespace,v_row.model,v_row.changes,v_row.model);
+    PERFORM pg_temp.fn_expect_failure(v_statement,'23514',v_row.constraint_name);
+    v_checks := v_checks + 1;
   END LOOP;
-  FOREACH table_name IN ARRAY ARRAY['projects','project_workspaces','project_counters','project_records','record_comments','posts','post_comments'] LOOP
-    statement := format('UPDATE %I.%I SET deleted_at = now() WHERE id = (SELECT id FROM fixtures WHERE model = %L)',
-      CASE WHEN table_name IN ('posts','post_comments') THEN 'community' ELSE 'projects' END,table_name,table_name);
-    PERFORM pg_temp.expect_failure(statement,'23514','ck_' || table_name || '_deletion_operation');
-    checks := checks + 1;
+  FOREACH v_table_name IN ARRAY ARRAY['projects','project_workspaces','project_counters','project_records','record_comments','posts','post_comments'] LOOP
+    v_statement := format('UPDATE %I.%I SET deleted_at = now() WHERE id = (SELECT id FROM fixtures WHERE model = %L)',
+      CASE WHEN v_table_name IN ('posts','post_comments') THEN 'community' ELSE 'projects' END,v_table_name,v_table_name);
+    PERFORM pg_temp.fn_expect_failure(v_statement,'23514','ck_' || v_table_name || '_deletion_operation');
+    v_checks := v_checks + 1;
   END LOOP;
-  IF checks <> 34 THEN RAISE EXCEPTION 'CHECK 테스트 개수가 다릅니다'; END IF;
-  RAISE NOTICE 'CHECK 거부 34개 통과, 물리 FK 0개';
+  IF v_checks <> 35 THEN RAISE EXCEPTION 'CHECK 테스트 개수가 다릅니다'; END IF;
+  RAISE NOTICE 'CHECK 거부 35개 통과, 물리 FK 0개';
 END $$;
 
 DO $$
-DECLARE r record; original record; new_id uuid;
+DECLARE v_original record;
 BEGIN
-  SELECT * INTO original FROM projects.project_memberships WHERE id = (SELECT id FROM fixtures WHERE model = 'project_memberships');
-  PERFORM pg_temp.expect_failure(format('INSERT INTO projects.project_memberships(id,project_id,user_id,created_by,updated_by) VALUES(%L,%L,%L,%L,%L)',gen_random_uuid(),original.project_id,original.user_id,original.created_by,original.updated_by),'23505','ux_project_memberships_current');
-  INSERT INTO projects.project_memberships(id,project_id,user_id,left_at,created_by,updated_by) VALUES(gen_random_uuid(),original.project_id,original.user_id,now(),original.created_by,original.updated_by);
+  SELECT * INTO v_original FROM projects.project_memberships WHERE id = (SELECT id FROM fixtures WHERE model = 'project_memberships');
+  PERFORM pg_temp.fn_expect_failure(format('INSERT INTO projects.project_memberships(id,project_id,user_id,created_by,updated_by) VALUES(%L,%L,%L,%L,%L)',gen_random_uuid(),v_original.project_id,v_original.user_id,v_original.created_by,v_original.updated_by),'23505','ux_project_memberships_current');
+  INSERT INTO projects.project_memberships(id,project_id,user_id,left_at,created_by,updated_by) VALUES(gen_random_uuid(),v_original.project_id,v_original.user_id,now(),v_original.created_by,v_original.updated_by);
 
-  SELECT * INTO original FROM social.friend_requests WHERE id = (SELECT id FROM fixtures WHERE model = 'friend_requests');
-  PERFORM pg_temp.expect_failure(format('INSERT INTO social.friend_requests(id,sender_id,recipient_id,created_by,updated_by) VALUES(%L,%L,%L,%L,%L)',gen_random_uuid(),original.recipient_id,original.sender_id,original.created_by,original.updated_by),'23505','ux_friend_requests_pending_pair');
-  INSERT INTO social.friend_requests(id,sender_id,recipient_id,status,created_by,updated_by) VALUES(gen_random_uuid(),original.recipient_id,original.sender_id,'cancelled',original.created_by,original.updated_by);
+  SELECT * INTO v_original FROM social.friend_requests WHERE id = (SELECT id FROM fixtures WHERE model = 'friend_requests');
+  PERFORM pg_temp.fn_expect_failure(format('INSERT INTO social.friend_requests(id,sender_id,recipient_id,created_by,updated_by) VALUES(%L,%L,%L,%L,%L)',gen_random_uuid(),v_original.recipient_id,v_original.sender_id,v_original.created_by,v_original.updated_by),'23505','ux_friend_requests_pending_pair');
+  INSERT INTO social.friend_requests(id,sender_id,recipient_id,status,created_by,updated_by) VALUES(gen_random_uuid(),v_original.recipient_id,v_original.sender_id,'cancelled',v_original.created_by,v_original.updated_by);
 
-  SELECT * INTO original FROM projects.project_invitations WHERE id = (SELECT id FROM fixtures WHERE model = 'project_invitations');
-  PERFORM pg_temp.expect_failure(format('INSERT INTO projects.project_invitations(id,project_id,sender_id,recipient_id,created_by,updated_by) VALUES(%L,%L,%L,%L,%L,%L)',gen_random_uuid(),original.project_id,original.sender_id,original.recipient_id,original.created_by,original.updated_by),'23505','ux_project_invitations_pending');
-  INSERT INTO projects.project_invitations(id,project_id,sender_id,recipient_id,status,created_by,updated_by) VALUES(gen_random_uuid(),original.project_id,original.sender_id,original.recipient_id,'cancelled',original.created_by,original.updated_by);
+  SELECT * INTO v_original FROM projects.project_invitations WHERE id = (SELECT id FROM fixtures WHERE model = 'project_invitations');
+  PERFORM pg_temp.fn_expect_failure(format('INSERT INTO projects.project_invitations(id,project_id,sender_id,recipient_id,created_by,updated_by) VALUES(%L,%L,%L,%L,%L,%L)',gen_random_uuid(),v_original.project_id,v_original.sender_id,v_original.recipient_id,v_original.created_by,v_original.updated_by),'23505','ux_project_invitations_pending');
+  INSERT INTO projects.project_invitations(id,project_id,sender_id,recipient_id,status,created_by,updated_by) VALUES(gen_random_uuid(),v_original.project_id,v_original.sender_id,v_original.recipient_id,'cancelled',v_original.created_by,v_original.updated_by);
 
-  SELECT * INTO original FROM projects.project_timers WHERE id = (SELECT id FROM fixtures WHERE model = 'project_timers');
-  PERFORM pg_temp.expect_failure(format('INSERT INTO projects.project_timers(id,workspace_id,owner_user_id,status,created_by,updated_by) VALUES(%L,%L,%L,''paused'',%L,%L)',gen_random_uuid(),original.workspace_id,original.owner_user_id,original.created_by,original.updated_by),'23505','ux_project_timers_current');
-  INSERT INTO projects.project_timers(id,workspace_id,owner_user_id,status,stopped_at,record_id,created_by,updated_by) VALUES(gen_random_uuid(),original.workspace_id,original.owner_user_id,'stopped',now(),gen_random_uuid(),original.created_by,original.updated_by);
+  SELECT * INTO v_original FROM projects.project_timers WHERE id = (SELECT id FROM fixtures WHERE model = 'project_timers');
+  PERFORM pg_temp.fn_expect_failure(format('INSERT INTO projects.project_timers(id,workspace_id,owner_user_id,status,created_by,updated_by) VALUES(%L,%L,%L,''paused'',%L,%L)',gen_random_uuid(),v_original.workspace_id,v_original.owner_user_id,v_original.created_by,v_original.updated_by),'23505','ux_project_timers_current');
+  INSERT INTO projects.project_timers(id,workspace_id,owner_user_id,status,stopped_at,record_id,created_by,updated_by) VALUES(gen_random_uuid(),v_original.workspace_id,v_original.owner_user_id,'stopped',now(),gen_random_uuid(),v_original.created_by,v_original.updated_by);
   RAISE NOTICE '부분 고유 인덱스 거부·종료 이력 허용 4개 통과';
 END $$;
 

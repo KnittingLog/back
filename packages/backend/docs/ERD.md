@@ -101,6 +101,18 @@ erDiagram
   String updated_by
   DateTime(3) deleted_at "nullable"
 }
+"auth_attempt_limits" {
+  String id PK
+  String(64) attempt_key UK
+  Int attempt_count
+  DateTime(3) window_started_at
+  DateTime(3) expires_at
+  DateTime(3) created_at
+  String created_by
+  DateTime(3) updated_at
+  String updated_by
+  DateTime(3) deleted_at "nullable"
+}
 "command_receipts" {
   String id PK
   String actor_user_id FK
@@ -273,6 +285,23 @@ Properties as follows:
 - `updated_at`: 등록 정보를 최근 변경한 시각입니다.
 - `updated_by`: 서버가 확인한 최근 변경 주체입니다.
 - `deleted_at`: 신규 작업 사용을 금지한 시각입니다. 과거 감사 식별자는 보존합니다.
+
+### `auth_attempt_limits`
+
+로그인과 계정 복구 시도를 프로세스 간 공유하는 제한 창입니다.
+
+Properties as follows:
+
+- `id`: 제한 창의 서버 생성 UUID입니다.
+- `attempt_key`: 동작 종류와 정규화한 식별자를 결합한 SHA-256 값입니다.
+- `attempt_count`: 현재 창에서 허용 횟수를 넘지 않도록 제한한 시도 수입니다.
+- `window_started_at`: DB 시각으로 시작한 10분 제한 창입니다.
+- `expires_at`: 창 만료 시각입니다. 만료 행은 정리 작업에서 삭제합니다.
+- `created_at`: 행 생성 시각입니다.
+- `created_by`: 고정 시스템 감사 주체입니다.
+- `updated_at`: 최근 변경 시각입니다.
+- `updated_by`: 최근 변경 시스템 감사 주체입니다.
+- `deleted_at`: 소프트 삭제 시각입니다. 제한 상태에서는 사용하지 않습니다.
 
 ### `command_receipts`
 

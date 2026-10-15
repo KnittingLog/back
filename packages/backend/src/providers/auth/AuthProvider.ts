@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { MyGlobal } from "../../MyGlobal";
 import { KnittingLogContext as K } from "../common/KnittingLogContext";
 import { PolicyProvider } from "../policies/PolicyProvider";
+import * as AuthAttemptProvider from "./AuthAttemptProvider";
 import { Security } from "./Security";
 
 export namespace AuthProvider {
@@ -49,28 +50,9 @@ export namespace AuthProvider {
   }
 
   export let passwordVerifier: Security.PasswordVerifier | undefined;
-  const attempts = new Map<string, { count: number; reset: number }>();
   const dummyPassword = Security.hashPassword(
     "계정 존재를 숨기는 고정 검증용 문자열",
   );
-
-  function attempt(kind: string, identifier: string): void {
-    const now = Date.now();
-    for (const [key, entry] of attempts) if (entry.reset <= now) attempts.delete(
-      key,
-    );
-    const key = Security.tokenHash(
-      `${kind}:${identifier.trim().toLowerCase()}`,
-    );
-    const entry = attempts.get(key) ?? { count: 0, reset: now + 600_000 };
-    entry.count++;
-    attempts.set(key, entry);
-    if (entry.count > 10) K.fail(
-      429,
-      "AUTH_RATE_LIMIT",
-      "잠시 후 다시 시도하세요.",
-    );
-  }
 
   export function identifier(input: string): string {
     try {
@@ -206,9 +188,9 @@ export namespace AuthProvider {
     });
   }
 
-  export function login(input: Login): Promise<Session> {
+  export async function login(input: Login): Promise<Session> {
     K.keys(input, ["login_id", "password"]);
-    attempt("login", input.login_id);
+    await AuthAttemptProvider.attempt("login", input.login_id);
     let login_id: string;
     try {
       login_id = Security.identifier(input.login_id);
@@ -248,7 +230,7 @@ export namespace AuthProvider {
 
   export async function recover(input: Recovery): Promise<RegistrationSession> {
     K.keys(input, ["login_id", "recovery_code", "password"]);
-    attempt("recovery", input.login_id);
+    await AuthAttemptProvider.attempt("recovery", input.login_id);
     let login_id: string;
     try {
       login_id = Security.identifier(input.login_id);
@@ -268,11 +250,14 @@ export namespace AuthProvider {
     });
   }
 
-  export function reissue(authorization: string | undefined, input: Password): Promise<RecoveryCode> {
+  export async function reissue(authorization: string | undefined, input: Password): Promise<RecoveryCode> {
     K.keys(input, ["password"]);
+    const actorId = await K.transaction((tx) => actor(authorization, tx)).then(
+      (user) => user.id,
+    );
+    await AuthAttemptProvider.attempt("reissue", actorId);
     return K.transaction(async (tx) => {
       const user = await actor(authorization, tx);
-      attempt("reissue", user.id);
       if (!await Security.verifyPassword(input.password, user.password_hash!)) invalidCredentials();
       return { recovery_code: await recoveryCode(tx, user.id) };
     });

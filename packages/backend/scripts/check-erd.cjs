@@ -17,6 +17,7 @@ const expectedModels = [
   "workspace_transfers", "stored_objects",
   "project_timers", "command_receipts", "user_identifiers", "recovery_codes",
   "system_principals", "report_actions",
+  "auth_attempt_limits",
 ];
 const auditColumns = [
   "created_at", "created_by", "updated_at", "updated_by", "deleted_at",
@@ -26,6 +27,7 @@ const contentModels = [
   "record_comments", "posts", "post_comments",
 ];
 const expectedChecks = [
+  ["accounts", "auth_attempt_limits", "window", "attempt_count BETWEEN 1 AND 11 AND expires_at > window_started_at AND expires_at <= window_started_at + interval '10 minutes'"],
   ["projects", "project_workspaces", "done_time", "(status = 'done') = (ended_at IS NOT NULL)"],
   ["projects", "project_workspaces", "version", "version >= 0"],
   ["projects", "project_counters", "value", "value >= 0 AND (target_value IS NULL OR target_value >= 0)"],

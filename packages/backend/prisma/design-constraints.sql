@@ -22,6 +22,10 @@ ALTER TABLE accounts.users
   ADD CONSTRAINT ck_users_active_secrets
   CHECK (deleted_at IS NOT NULL OR (password_hash IS NOT NULL AND handle IS NOT NULL AND nickname IS NOT NULL));
 
+ALTER TABLE accounts.auth_attempt_limits
+  ADD CONSTRAINT ck_auth_attempt_limits_window
+  CHECK (attempt_count BETWEEN 1 AND 11 AND expires_at > window_started_at AND expires_at <= window_started_at + interval '10 minutes');
+
 ALTER TABLE accounts.user_identifiers
   ADD CONSTRAINT ck_user_identifiers_format
   CHECK (value ~ '^[a-z0-9][a-z0-9_.]{1,30}[a-z0-9]$' AND value NOT LIKE '%..%');
