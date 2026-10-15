@@ -9,10 +9,6 @@ export interface ISystem {
    */
   uid: number;
 
-  /**
-   * `process.argv`
-   */
-  arguments: string[];
 
   /**
    * Git commit info.

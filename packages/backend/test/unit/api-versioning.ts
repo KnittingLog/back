@@ -1,6 +1,8 @@
 import { Body, Controller, Get, INestApplication, Module, Post } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import assert from "node:assert/strict";
+import fs from "node:fs/promises";
+import path from "node:path";
 
 import { MyBackend } from "../../src/MyBackend";
 import { MonitorHealthController } from "../../src/controllers/monitors/MonitorHealthController";
@@ -31,6 +33,15 @@ class StorageParserController {
 class ContractModule {}
 
 async function main(): Promise<void> {
+  const swagger = JSON.parse(await fs.readFile(path.resolve(process.cwd(), "../api/swagger.json"), "utf8")) as { paths: Record<string, unknown> };
+  const neutral = ["/monitors/health", "/monitors/system", "/monitors/performance"];
+  const routes = Object.keys(swagger.paths);
+  const byName = (left: string, right: string) => left.localeCompare(right);
+  assert.deepEqual(routes.filter((route) => neutral.includes(route)).sort(byName), [...neutral].sort(byName));
+  assert.ok(routes.every((route) => neutral.includes(route) || route.startsWith("/api/v1/")),
+    `업무 경로는 /api/v1/ 버전을 사용해야 합니다: ${routes.filter((route) => !neutral.includes(route) && !route.startsWith("/api/v1/")).join(", ")}`);
+  assert.ok(!routes.some((route) => route.includes("internal_server_error") || route.includes("uncaught_exception")));
+
   const app = await NestFactory.create(ContractModule, { logger: false });
   try {
     const backend = MyBackend as typeof MyBackend & {
@@ -72,7 +83,7 @@ async function main(): Promise<void> {
     }
     assert.equal((await read("/monitors/health")).status, 200);
     assert.equal((await read("/api/v1/monitors/health")).status, 404);
-    console.log("PASS API-VER-001~005: URI 버전과 기존 모니터 경계");
+    console.log("PASS API-VER-001~005, API-VER-007: URI 버전과 모든 실제 경로 계약");
   } finally {
     await app.close();
   }
