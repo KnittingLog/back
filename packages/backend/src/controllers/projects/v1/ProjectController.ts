@@ -11,8 +11,8 @@ export class ProjectController {
   }
 
   @core.TypedRoute.Get()
-  public list(@Headers("authorization") auth: string | undefined, @core.TypedQuery() query: { status?: P.Workspace["status"] }): Promise<P.Project[]> {
-    return P.list(auth, query.status);
+  public list(@Headers("authorization") auth: string | undefined, @core.TypedQuery() query: { status?: P.Workspace["status"]; sort?: "status" }): Promise<P.Project[]> {
+    return P.list(auth, query.status, query.sort);
   }
 
   @core.TypedRoute.Get(":id")

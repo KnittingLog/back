@@ -240,12 +240,18 @@ export namespace ProjectProvider {
     });
   }
 
-  export async function list(authorization: string | undefined, status?: Workspace["status"]): Promise<Project[]> {
+  export async function list(authorization: string | undefined, status?: Workspace["status"], sort?: "status"): Promise<Project[]> {
     return K.transaction(async (tx) => {
       const actorId = await verified(tx, authorization);
       const rows = await tx.projects.findMany({ where: { deleted_at: null, memberships: { some: { user_id: actorId, left_at: null, deleted_at: null } },
         ...(status ? { workspaces: { some: { owner_user_id: actorId, deleted_at: null, status } } } : {}),
       }, orderBy: [{ created_at: "desc" }, { id: "desc" }] });
+      if (sort === "status") {
+        const workspaces = await tx.project_workspaces.findMany({ where: { project_id: { in: rows.map((row) => row.id) }, owner_user_id: actorId, deleted_at: null } });
+        const statuses = new Map(workspaces.map((row) => [row.project_id, row.status]));
+        const rank = { active: 0, paused: 1, done: 2 };
+        rows.sort((a, b) => (rank[statuses.get(a.id) ?? "done"] - rank[statuses.get(b.id) ?? "done"]) || b.created_at.getTime() - a.created_at.getTime() || b.id.localeCompare(a.id));
+      }
       return rows.map(project);
     });
   }
@@ -282,9 +288,10 @@ export namespace ProjectProvider {
     return K.transaction(async (tx) => {
       const actorId = await verified(tx, authorization);
       await access(tx, actorId, id);
-      return (await tx.project_memberships.findMany({ where: { project_id: id, left_at: null, deleted_at: null, user: { deleted_at: null } }, orderBy: [{ created_at: "asc" }, { id: "asc" }] })).map(
-        membership,
-      );
+      const rows = await tx.project_memberships.findMany({ where: { project_id: id, left_at: null, deleted_at: null, user: { deleted_at: null } }, orderBy: [{ created_at: "asc" }, { id: "asc" }] });
+      const visible: Membership[] = [];
+      for (const row of rows) if (!await K.blocked(tx, actorId, row.user_id)) visible.push(membership(row));
+      return visible;
     });
   }
 
@@ -322,7 +329,7 @@ export namespace ProjectProvider {
   export async function invitations(authorization: string | undefined, status?: Invitation["status"]): Promise<Invitation[]> {
     return K.transaction(async (tx) => {
       const actorId = await verified(tx, authorization);
-      const rows = await tx.project_invitations.findMany({ where: { recipient_id: actorId, deleted_at: null, ...(status ? { status } : {}), project: { deleted_at: null, terminated_at: null }, sender: { deleted_at: null } }, orderBy: [{ created_at: "desc" }, { id: "desc" }] });
+      const rows = await tx.project_invitations.findMany({ where: { recipient_id: actorId, deleted_at: null, status: status ?? "pending", project: { deleted_at: null, terminated_at: null }, sender: { deleted_at: null } }, orderBy: [{ created_at: "desc" }, { id: "desc" }] });
       const visible: Invitation[] = [];
       for (const row of rows) if (!await K.blocked(tx, actorId, row.sender_id)) visible.push(invitation(row));
       return visible;
