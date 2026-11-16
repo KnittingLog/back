@@ -15,7 +15,7 @@ export const NESTIA_CONFIG: INestiaConfig = {
     output: "../api/swagger.json",
     servers: [
       {
-        url: "http://localhost:37001",
+        url: "http://localhost:8000",
         description: "Local Server",
       },
     ],

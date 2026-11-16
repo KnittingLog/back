@@ -15,7 +15,7 @@ const main = async (): Promise<void> => {
     execute("pnpm install");
     execute("pnpm build:swagger");
   }
-  const docs = await import("../../packages/api/swagger.json" as any);
+const docs = ((await import("../../../api/swagger.json", { with: { type: "json" } })) as any).default;
   const app = express();
   app.use("/api-docs", SwaggerUI.serve, SwaggerUI.setup(docs));
   app.listen(37810);
