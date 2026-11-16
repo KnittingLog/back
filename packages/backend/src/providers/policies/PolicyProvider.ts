@@ -54,8 +54,8 @@ export namespace PolicyProvider {
 
   export async function agree(tx: K.Tx, userId: string, ids: string[]): Promise<Consent[]> {
     const current = await active(tx);
+    // 등록된 정책 문서가 없으면 동의할 대상이 없으므로 빈 목록을 허용합니다.
     if (
-      !current.length ||
       new Set(ids).size !== ids.length ||
       current.some((row) => !ids.includes(row.id)) ||
       ids.some((id) => !current.some((row) => row.id === id))

@@ -91,11 +91,8 @@ export namespace KnittingLogContext {
       },
       orderBy: { effective_at: "desc" },
     });
-    if (!documents.length) fail(
-      503,
-      "POLICY_UNAVAILABLE",
-      "현재 정책 문서를 확인할 수 없습니다.",
-    );
+    // 등록된 정책 문서가 없으면 동의 없이 이용할 수 있습니다.
+    if (!documents.length) return;
     const seen = new Set<string>();
     const consents = await tx.policy_consents.findMany({
       where: { user_id: actorId, deleted_at: null },
